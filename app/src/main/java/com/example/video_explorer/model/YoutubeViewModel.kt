@@ -13,6 +13,7 @@ import com.example.video_explorer.data.state.HomeScreenUiState
 import com.example.video_explorer.data.state.WatchVideoUiState
 import com.example.video_explorer.data.YoutubeVideoRepository
 import com.example.video_explorer.data.state.SignInUiState
+import com.example.video_explorer.data.user.UserData
 import com.example.video_explorer.data.youtubeData.YoutubeVideo
 import kotlinx.coroutines.async
 import kotlinx.coroutines.runBlocking
@@ -50,6 +51,9 @@ class YoutubeViewModel(
         } else
             signInUiState = SignInUiState.SignedIn(user = (signInResult as SignInUiState.SignedIn).user)
     }
+    fun setSignInUiState(user: UserData) {
+        signInUiState = SignInUiState.SignedIn(user = user)
+    }
     fun resetSignInUiState() {
         signInUiState = SignInUiState.NotSignedIn()
     }
@@ -59,7 +63,7 @@ class YoutubeViewModel(
         Log.i("ex_mess", "ViewModel getHomeVideoList Run Start")
         try {
             var videoList: List<YoutubeVideo> = listOf(
-                youtubeVideoRepository.getVideoDetails("7lCDEYXw3mM"),
+                youtubeVideoRepository.getVideoDetails("7lCDEYXw3mM, EoNOWVYKyo0, RyTb5genMmE"),
                 youtubeVideoRepository.getVideoDetails("RyTb5genMmE"),
                 youtubeVideoRepository.getVideoDetails("EoNOWVYKyo0")
             )

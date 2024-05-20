@@ -23,6 +23,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.TopAppBarScrollBehavior
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
@@ -97,6 +98,15 @@ fun VideoExplorerApp(
                     LoginScreen(loginViewModel = SignInViewModel())
                 }
                 composable(route = Screen.ProfileScreen.name) {
+                    LaunchedEffect(key1 = Unit) {
+                        val currentSignedInUser = googleAuthUiClient.getSignedInUser()
+                        if(currentSignedInUser != null) {
+//                            googleAuthUiClient.signOut()
+//                            youtubeViewModel.resetSignInUiState()
+                            youtubeViewModel.setSignInUiState(currentSignedInUser)
+//                            navController.navigate(route = Screen.ProfileScreen.name)
+                        }
+                    }
                     val launcher = rememberLauncherForActivityResult(
                         contract = ActivityResultContracts.StartIntentSenderForResult(),
                         onResult = { result ->
@@ -113,6 +123,7 @@ fun VideoExplorerApp(
                     ProfileScreen(
                         signInUiState = youtubeViewModel.signInUiState,
                         onSignIn = {
+                            Log.i("ex_mess", "Begin sign in")
                             scope.launch {
                                 val signInIntentSender = googleAuthUiClient.signIn()
                                 launcher.launch(
@@ -121,9 +132,11 @@ fun VideoExplorerApp(
                                     ).build()
                                 )
                             }
+                            Log.i("ex_mess", "End sign in")
                         },
                         onSignOut = {
                             scope.launch {
+                                Log.i("ex_mess", "Begin sign Out")
                                 googleAuthUiClient.signOut()
                                 youtubeViewModel.resetSignInUiState()
                                 Toast.makeText(
@@ -133,6 +146,7 @@ fun VideoExplorerApp(
                                 ).show()
 
                                 navController.popBackStack()
+                                Log.i("ex_mess", "End sign out")
                             }
                         }
                     )

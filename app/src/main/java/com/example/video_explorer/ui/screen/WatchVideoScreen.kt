@@ -6,14 +6,11 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ThumbUp
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
@@ -21,7 +18,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.video_explorer.data.youtubeData.Item
+import com.example.video_explorer.data.youtubeData.VideoItem
 import com.example.video_explorer.data.youtubeData.Localized
 import com.example.video_explorer.data.youtubeData.PageInfo
 import com.example.video_explorer.data.youtubeData.Snippet
@@ -32,18 +29,18 @@ import com.example.video_explorer.ui.YouTubeVideoPlayer
 
 @Composable
 fun WatchVideoScreen(
-    video: YoutubeVideo
+    video: VideoItem
 ) {
     Column(
 
     ) {
         YouTubeVideoPlayer(
-            videoId = video.items[0].id,
+            videoId = video.id,
             lifecycleOwner = LocalLifecycleOwner.current
         )
         Spacer(modifier = Modifier.padding(8.dp))
         Text(
-            text = video.items[0].snippet.title,
+            text = video.snippet.title,
             style = TextStyle(fontWeight = FontWeight.Bold, fontSize = 18.sp),
             modifier = Modifier.padding(start = 8.dp)
         )
@@ -51,7 +48,7 @@ fun WatchVideoScreen(
         Row(
             modifier = Modifier.padding(start = 8.dp)
         ) {
-            LikeDislikeIcon(R.drawable.thumb_up, video.items[0].statistics.likeCount)
+            LikeDislikeIcon(R.drawable.thumb_up, video.statistics.likeCount)
             Spacer(modifier = Modifier.padding(16.dp))
             LikeDislikeIcon(R.drawable.thumb_down)
         }
@@ -110,7 +107,7 @@ fun WatchVideoScreenPreview() {
         commentCount = "10"
     )
 
-    val videoItem = Item(
+    val videoItem = VideoItem(
         etag = "",
         kind = "",
         id = "7lCDEYXw3mM",
@@ -130,5 +127,5 @@ fun WatchVideoScreenPreview() {
         items = listOf(videoItem),
         pageInfo = pageInfo
     )
-    WatchVideoScreen(video = fakeVideo)
+    WatchVideoScreen(video = fakeVideo.items[0])
 }

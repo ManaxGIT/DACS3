@@ -11,7 +11,7 @@ data class YoutubeVideo(
     @SerialName("kind")
     val kind: String,
     @SerialName("items")
-    val items: List<Item>,
+    val items: List<VideoItem>,
     @SerialName("pageInfo")
     val pageInfo: PageInfo
 
