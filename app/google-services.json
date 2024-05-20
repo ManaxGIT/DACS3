@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "412330881438",
+    "project_id": "video-explorer-f8ae1",
+    "storage_bucket": "video-explorer-f8ae1.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:412330881438:android:c46853f8521bd44519e68f",
+        "android_client_info": {
+          "package_name": "com.example.video_explorer"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDomOL2rufaqbwsjz0X1AnZs2w8savP9pA"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
