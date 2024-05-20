@@ -92,7 +92,7 @@ fun VideoExplorerApp(
                     )
                 }
                 composable(route = Screen.WatchVideo.name) {
-                    WatchVideoScreen((youtubeViewModel.watchVideoUiState as WatchVideoUiState.Success).youtubeVideo)
+                    WatchVideoScreen((youtubeViewModel.watchVideoUiState as WatchVideoUiState.Success).youtubeVideoItem)
                 }
                 composable(route = Screen.LoginScreen.name) {
                     LoginScreen(loginViewModel = SignInViewModel())

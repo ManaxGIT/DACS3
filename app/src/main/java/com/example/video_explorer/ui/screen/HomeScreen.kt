@@ -19,6 +19,7 @@ import androidx.navigation.NavHostController
 import coil.compose.rememberAsyncImagePainter
 import com.example.video_explorer.data.state.HomeScreenUiState
 import com.example.video_explorer.data.state.WatchVideoUiState
+import com.example.video_explorer.data.youtubeData.VideoItem
 import com.example.video_explorer.data.youtubeData.YoutubeVideo
 import com.example.video_explorer.ui.Screen
 
@@ -51,11 +52,11 @@ private fun HomeScreenList(
     modifier: Modifier = Modifier
 ) {
     LazyColumn(modifier = Modifier.fillMaxSize()) {
-        items((homeScreenUiState as HomeScreenUiState.Success).videoList) { video ->
+        items((homeScreenUiState as HomeScreenUiState.Success).videoList.items) { videoItem ->
             VideoItem(
-                video = video,
+                video = videoItem,
                 onClick = {
-                    (watchVideoUiState as WatchVideoUiState.Success).setWatchVideo(video = video)
+                    (watchVideoUiState as WatchVideoUiState.Success).setWatchVideo(video = videoItem)
                     navController.navigate(Screen.WatchVideo.name)
                 }
             )
@@ -64,7 +65,7 @@ private fun HomeScreenList(
 }
 
 @Composable
-fun VideoItem(video: YoutubeVideo, onClick: () -> Unit) {
+fun VideoItem(video: VideoItem, onClick: () -> Unit) {
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -73,7 +74,7 @@ fun VideoItem(video: YoutubeVideo, onClick: () -> Unit) {
 
     ) {
         Image(
-            painter = rememberAsyncImagePainter(model = video.items[0].snippet.thumbnails.medium.url),
+            painter = rememberAsyncImagePainter(model = video.snippet.thumbnails.medium.url),
             contentDescription = null,
             modifier = Modifier
                 .fillMaxWidth()
@@ -82,7 +83,7 @@ fun VideoItem(video: YoutubeVideo, onClick: () -> Unit) {
         )
         Spacer(modifier = Modifier.height(8.dp))
         Text(
-            text = video.items[0].snippet.title,
+            text = video.snippet.title,
             style = TextStyle(fontWeight = FontWeight.Bold, fontSize = 18.sp)
         )
     }

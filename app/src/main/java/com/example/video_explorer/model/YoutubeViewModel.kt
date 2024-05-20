@@ -14,11 +14,13 @@ import com.example.video_explorer.data.state.WatchVideoUiState
 import com.example.video_explorer.data.YoutubeVideoRepository
 import com.example.video_explorer.data.state.SignInUiState
 import com.example.video_explorer.data.user.UserData
+import com.example.video_explorer.data.youtubeData.VideoItem
 import com.example.video_explorer.data.youtubeData.YoutubeVideo
 import kotlinx.coroutines.async
 import kotlinx.coroutines.runBlocking
 import java.io.IOException
 import java.lang.ClassCastException
+import java.net.UnknownHostException
 
 class YoutubeViewModel(
     private val youtubeVideoRepository: YoutubeVideoRepository
@@ -32,15 +34,11 @@ class YoutubeViewModel(
 
     init {
         runBlocking {
-            async { getHomeVideoList() }.await()
             async {
-                try {
-                    displayVideo((homeScreenUiState as HomeScreenUiState.Success).videoList[0])
-                }  catch (e: Exception) {
-                    Log.i("ex_mess", "No Internet At ViewModel")
-                    homeScreenUiState = HomeScreenUiState.Error("No Internet Connection")
-                    watchVideoUiState = WatchVideoUiState.Error
-                }
+                getHomeVideoList()
+            }.await()
+            async {
+                displayVideo((homeScreenUiState as HomeScreenUiState.Success).videoList.items[0])
             }
         }
     }
@@ -59,30 +57,32 @@ class YoutubeViewModel(
     }
 
 
-    suspend fun getHomeVideoList() {
+    suspend private fun getHomeVideoList() {
         Log.i("ex_mess", "ViewModel getHomeVideoList Run Start")
         try {
-            var videoList: List<YoutubeVideo> = listOf(
-                youtubeVideoRepository.getVideoDetails("7lCDEYXw3mM, EoNOWVYKyo0, RyTb5genMmE"),
-                youtubeVideoRepository.getVideoDetails("RyTb5genMmE"),
-                youtubeVideoRepository.getVideoDetails("EoNOWVYKyo0")
-            )
+            var videoList: YoutubeVideo = youtubeVideoRepository.getVideoDetails("7lCDEYXw3mM,EoNOWVYKyo0,RyTb5genMmE")
             homeScreenUiState = HomeScreenUiState.Success(
                 videoList = videoList
             )
             Log.i("ex_mess", "ViewModel getHomeVideoList Run End")
         } catch (e: IOException) {
-            homeScreenUiState = HomeScreenUiState.Error()
-            Log.i("ex_mess", e.toString())
+            homeScreenUiState = HomeScreenUiState.Error("No Internet Connection")
+            Log.i("ex_mess3", e.toString())
         } catch (e: Exception) {
             homeScreenUiState = HomeScreenUiState.Error()
-            Log.i("ex_mess", e.toString())
+            Log.i("ex_mess4", e.toString())
         }
     }
 
-    suspend fun displayVideo(video: YoutubeVideo) {
+    suspend private fun displayVideo(video: VideoItem) {
         Log.i("ex_mess", "ViewModel displayVideo Run Start")
-        watchVideoUiState = WatchVideoUiState.Success(video)
+        try {
+            watchVideoUiState = WatchVideoUiState.Success(video)
+        }  catch (e: Exception) {
+            Log.i("ex_mess", "No Internet At ViewModel")
+            homeScreenUiState = HomeScreenUiState.Error()
+            watchVideoUiState = WatchVideoUiState.Error
+        }
         Log.i("ex_mess", "ViewModel displayVideo Run End")
     }
 
