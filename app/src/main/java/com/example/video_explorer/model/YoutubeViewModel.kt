@@ -15,6 +15,7 @@ import com.example.video_explorer.data.YoutubeVideoRepository
 import com.example.video_explorer.data.state.SignInUiState
 import com.example.video_explorer.data.user.UserData
 import com.example.video_explorer.data.youtubeData.VideoItem
+import com.example.video_explorer.data.youtubeData.YoutubeChannel
 import com.example.video_explorer.data.youtubeData.YoutubeVideo
 import kotlinx.coroutines.async
 import kotlinx.coroutines.delay
@@ -57,11 +58,27 @@ class YoutubeViewModel(
     }
 
 
+    suspend fun getChannelDetails(channelId: String): YoutubeChannel? {
+        try {
+            Log.i("ex_mess", "ViewModel getChannelDetails Id = ${channelId}")
+            return youtubeVideoRepository.getChannelDetails(channelId = channelId)
+        } catch (e: Exception) {
+            Log.i("ex_mess getChannelDetails", e.toString())
+            return null
+        }
+    }
+
     suspend private fun getHomeVideoList() {
         Log.i("ex_mess", "ViewModel getHomeVideoList Run Start")
         try {
-            var videoList: YoutubeVideo = youtubeVideoRepository.getVideoDetails("7lCDEYXw3mM,EoNOWVYKyo0,RyTb5genMmE")
+            var videoList: YoutubeVideo = youtubeVideoRepository.getVideoDetails("7lCDEYXw3mM,EoNOWVYKyo0,RyTb5genMmE,D7obfQ26V1M,-ljpcKRJdA8,C3GouGa0noM")
 //            delay(6000)
+            videoList.items.forEach{ video->
+                val youtubeChannel = getChannelDetails(video.snippet.channelId)
+                if (youtubeChannel != null) {
+                    video.channelItem = youtubeChannel.items[0]
+                }
+            }
             homeScreenUiState = HomeScreenUiState.Success(
                 videoList = videoList
             )
@@ -74,6 +91,7 @@ class YoutubeViewModel(
             Log.i("ex_mess4", e.toString())
         }
     }
+
 
     suspend private fun displayVideo(video: VideoItem) {
         Log.i("ex_mess", "ViewModel displayVideo Run Start")

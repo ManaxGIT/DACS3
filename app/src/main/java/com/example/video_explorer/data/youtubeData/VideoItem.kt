@@ -17,5 +17,7 @@ data class VideoItem(
     @SerialName("snippet")
     val snippet: Snippet,
     @SerialName("statistics")
-    val statistics: VideoStatistics
+    val statistics: VideoStatistics,
+    @SerialName("channel")
+    var channelItem: ChannelItem? = null
 )

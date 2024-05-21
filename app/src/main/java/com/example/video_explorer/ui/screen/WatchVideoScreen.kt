@@ -68,11 +68,26 @@ fun LikeDislikeIcon(iconId: Int, count: String = "-1") {
         Spacer(modifier = Modifier.padding(2.dp))
         if (!count.equals("-1"))
             Text(
-                text = count.toString(),
+                text = calculateLike(count),
                 color = Color.Gray
             )
 
     }
+}
+private fun calculateLike(view: String): String {
+    val viewNumber = view.toDouble()
+    if(viewNumber >= 1000000000)
+        return "${String.format("%.1f", viewNumber / 1000000000)} T"
+    else if (viewNumber >= 10000000)
+        return "${(viewNumber / 1000000).toInt()} Tr"
+    else if (viewNumber >= 1000000)
+        return "${String.format("%.1f", viewNumber / 1000000)} Tr"
+    else if (viewNumber >= 10000)
+        return "${(viewNumber / 1000).toInt()} N"
+    else if (viewNumber >= 1000)
+        return "${String.format("%.1f", viewNumber / 1000)} N"
+    else
+        return view
 }
 
 

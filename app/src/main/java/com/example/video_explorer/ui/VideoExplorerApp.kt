@@ -87,8 +87,7 @@ fun VideoExplorerApp(
             ) {
                 composable(route = Screen.HomeScreen.name) {
                     HomeScreen(
-                        watchVideoUiState = youtubeViewModel.watchVideoUiState,
-                        homeScreenUiState = youtubeViewModel.homeScreenUiState,
+                        youtubeViewModel = youtubeViewModel,
                         navController = navController
                     )
                 }
