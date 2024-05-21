@@ -55,10 +55,10 @@ enum class Screen(val title: String) {
 fun VideoExplorerApp(
     applicationContext: Context,
     RESULT_OK: Int,
-    navController: NavHostController = rememberNavController(),
-    youtubeViewModel: YoutubeViewModel = viewModel(factory = YoutubeViewModel.Factory)
 ) {
     Log.i("ex_mess", "Video Explorer App Run")
+    val navController: NavHostController = rememberNavController()
+    val youtubeViewModel: YoutubeViewModel = viewModel(factory = YoutubeViewModel.Factory)
     val scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior()
     val scope = rememberCoroutineScope()
     val googleAuthUiClient by lazy {
@@ -72,7 +72,8 @@ fun VideoExplorerApp(
         topBar = { YoutubeTopAppBar(
             scrollBehavior = scrollBehavior,
             onProfileClick = {
-                navController.navigate(Screen.ProfileScreen.name)
+                if(navController.currentDestination?.route != Screen.ProfileScreen.name)
+                    navController.navigate(Screen.ProfileScreen.name)
             }
         ) }
     ) { innerPadding ->

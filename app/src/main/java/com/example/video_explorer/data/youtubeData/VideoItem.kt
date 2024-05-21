@@ -1,6 +1,8 @@
 package com.example.video_explorer.data.youtubeData
 
 
+import com.example.video_explorer.data.youtubeData.parts.Snippet
+import com.example.video_explorer.data.youtubeData.parts.VideoStatistics
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
@@ -15,5 +17,5 @@ data class VideoItem(
     @SerialName("snippet")
     val snippet: Snippet,
     @SerialName("statistics")
-    val statistics: Statistics
+    val statistics: VideoStatistics
 )

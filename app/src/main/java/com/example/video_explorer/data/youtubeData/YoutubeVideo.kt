@@ -1,6 +1,7 @@
 package com.example.video_explorer.data.youtubeData
 
 
+import com.example.video_explorer.data.youtubeData.parts.PageInfo
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 

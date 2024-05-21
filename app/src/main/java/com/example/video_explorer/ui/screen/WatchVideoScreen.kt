@@ -18,12 +18,12 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.video_explorer.data.youtubeData.parts.Localized
 import com.example.video_explorer.data.youtubeData.VideoItem
-import com.example.video_explorer.data.youtubeData.Localized
-import com.example.video_explorer.data.youtubeData.PageInfo
-import com.example.video_explorer.data.youtubeData.Snippet
-import com.example.video_explorer.data.youtubeData.Statistics
-import com.example.video_explorer.data.youtubeData.Thumbnails
+import com.example.video_explorer.data.youtubeData.parts.PageInfo
+import com.example.video_explorer.data.youtubeData.parts.Snippet
+import com.example.video_explorer.data.youtubeData.parts.VideoStatistics
+import com.example.video_explorer.data.youtubeData.parts.Thumbnails
 import com.example.video_explorer.data.youtubeData.YoutubeVideo
 import com.example.video_explorer.ui.YouTubeVideoPlayer
 
@@ -100,7 +100,7 @@ fun WatchVideoScreenPreview() {
         localized = localized
     )
 
-    val statistics = Statistics(
+    val statistics = VideoStatistics(
         viewCount = "13255",
         likeCount = "85",
         favoriteCount = "0",

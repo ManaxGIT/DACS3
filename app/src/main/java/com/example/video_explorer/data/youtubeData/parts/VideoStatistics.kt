@@ -1,11 +1,11 @@
-package com.example.video_explorer.data.youtubeData
+package com.example.video_explorer.data.youtubeData.parts
 
 
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
 @Serializable
-data class Statistics(
+data class VideoStatistics(
     @SerialName("commentCount")
     val commentCount: String? = "0",
     @SerialName("favoriteCount")

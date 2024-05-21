@@ -31,16 +31,29 @@ fun HomeScreen(
     modifier: Modifier = Modifier,
     contentPadding: PaddingValues = PaddingValues(0.dp),
 ) {
-    Log.i("ex_mess", "HomeScreen Run")
+    Log.i("ex_mess", "HomeScreen Run Start")
 //    when(watchVideoUiState) {
 //        is WatchVideoUiState.Loading -> LoadingScreen(modifier = modifier.fillMaxSize())
 //        is WatchVideoUiState.SignedIn -> ErrorScreen(errorNote = watchVideoUiState.youtubeVideo.items[0].snippet.title)
 //        is WatchVideoUiState.Error -> ErrorScreen(errorNote = "Something Unusual Happened")
 //
     when(homeScreenUiState) {
-        is HomeScreenUiState.Loading -> LoadingScreen(modifier = modifier.fillMaxSize())
-        is HomeScreenUiState.Success -> HomeScreenList(watchVideoUiState = watchVideoUiState, homeScreenUiState = homeScreenUiState, navController = navController)
-        is HomeScreenUiState.Error -> ErrorScreen(errorNote = homeScreenUiState.errorNote)
+        is HomeScreenUiState.Loading -> {
+            LoadingScreen(modifier = modifier.fillMaxSize())
+            Log.i("ex_mess", "HomeScreen Is Loading")
+        }
+        is HomeScreenUiState.Success -> {
+            Log.i("ex_mess", "HomeScreen Is Success")
+            HomeScreenList(
+                watchVideoUiState = watchVideoUiState,
+                homeScreenUiState = homeScreenUiState,
+                navController = navController
+            )
+        }
+        is HomeScreenUiState.Error -> {
+            Log.i("ex_mess", "HomeScreen Is Error")
+            ErrorScreen(errorNote = homeScreenUiState.errorNote)
+        }
     }
 }
 

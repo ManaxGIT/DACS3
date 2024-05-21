@@ -17,10 +17,10 @@ import com.example.video_explorer.data.user.UserData
 import com.example.video_explorer.data.youtubeData.VideoItem
 import com.example.video_explorer.data.youtubeData.YoutubeVideo
 import kotlinx.coroutines.async
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
 import java.io.IOException
 import java.lang.ClassCastException
-import java.net.UnknownHostException
 
 class YoutubeViewModel(
     private val youtubeVideoRepository: YoutubeVideoRepository
@@ -61,6 +61,7 @@ class YoutubeViewModel(
         Log.i("ex_mess", "ViewModel getHomeVideoList Run Start")
         try {
             var videoList: YoutubeVideo = youtubeVideoRepository.getVideoDetails("7lCDEYXw3mM,EoNOWVYKyo0,RyTb5genMmE")
+//            delay(6000)
             homeScreenUiState = HomeScreenUiState.Success(
                 videoList = videoList
             )
