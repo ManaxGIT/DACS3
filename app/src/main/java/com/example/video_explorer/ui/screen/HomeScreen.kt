@@ -36,6 +36,8 @@ import com.example.video_explorer.data.youtubeData.parts.TopicDetails
 import com.example.video_explorer.data.youtubeData.parts.VideoStatistics
 import com.example.video_explorer.model.YoutubeViewModel
 import com.example.video_explorer.ui.Screen
+import com.example.video_explorer.ui.render.calculateTime
+import com.example.video_explorer.ui.render.calculateView
 import okio.utf8Size
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -129,7 +131,7 @@ fun VideoItem(video: VideoItem, onClick: () -> Unit, modifier: Modifier= Modifie
                 if (videoTitle.utf8Size() > 70)
                     videoTitle = "${videoTitle.substring(0,70)}..."
 
-                var channelTitle = "${channel.snippet.title} · ${calculateView(video.statistics.viewCount)} · ${calculateTime(video.snippet.publishedAt)}"
+                var channelTitle = "${channel.snippet.title} · ${calculateView(video.statistics.viewCount)} lượt xem · ${calculateTime(video.snippet.publishedAt)}"
                 Text(
                     text = videoTitle,
                     style = TextStyle(fontWeight = FontWeight.Bold, fontSize = 18.sp)
@@ -140,42 +142,7 @@ fun VideoItem(video: VideoItem, onClick: () -> Unit, modifier: Modifier= Modifie
     }
 }
 
-private fun calculateView(view: String): String {
-    val viewNumber = view.toDouble()
-    if(viewNumber >= 1000000000)
-        return "${String.format("%.1f", viewNumber / 1000000000)} T lượt xem"
-    else if (viewNumber >= 10000000)
-        return "${(viewNumber / 1000000).toInt()} Tr lượt xem"
-    else if (viewNumber >= 1000000)
-        return "${String.format("%.1f", viewNumber / 1000000)} Tr lượt xem"
-    else if (viewNumber >= 10000)
-        return "${(viewNumber / 1000).toInt()} N lượt xem"
-    else if (viewNumber >= 1000)
-        return "${String.format("%.1f", viewNumber / 1000)} N lượt xem"
-    else
-        return view
-}
 
-private fun calculateTime(start: String): String {
-    val formatter = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'")
-    formatter.timeZone = TimeZone.getTimeZone("UTC")
-
-    val startTime = formatter.parse(start)
-    val currentTime = Date()
-
-    val diff = (currentTime.time - startTime.time) / 1000
-
-    if (currentTime.year - startTime.year >= 1 && diff / (60*60) >= (24*30*12))
-        return "${currentTime.year - startTime.year} năm trước"
-    else if ((currentTime.month - startTime.month + 12) % 12 >= 1 && diff / (60*60) >= (24*30))
-        return "${(currentTime.month - startTime.month + 12) % 12} tháng trước"
-    else if ((currentTime.date - startTime.date + 31) % 31 >= 1 && diff / (60*60) >= 24)
-        return "${(currentTime.date - startTime.date + 31) % 31} ngày trước"
-    else if (diff / (60*60) >= 1)
-        return "${diff / (60*60)} giờ trước"
-    else
-        return "${(diff % (60 * 60)) / (60)} phút trước"
-}
 
 
 

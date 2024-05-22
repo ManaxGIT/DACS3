@@ -14,15 +14,13 @@ import com.example.video_explorer.data.state.WatchVideoUiState
 import com.example.video_explorer.data.YoutubeVideoRepository
 import com.example.video_explorer.data.state.SignInUiState
 import com.example.video_explorer.data.user.UserData
-import com.example.video_explorer.data.youtubeData.VideoItem
 import com.example.video_explorer.data.youtubeData.YoutubeChannel
 import com.example.video_explorer.data.youtubeData.YoutubeVideo
+import com.example.video_explorer.data.youtubeData.YoutubeVideoComment
 import kotlinx.coroutines.async
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
 import java.io.IOException
-import java.lang.ClassCastException
-import java.net.UnknownHostException
+import kotlin.ClassCastException
 
 class YoutubeViewModel(
     private val youtubeVideoRepository: YoutubeVideoRepository
@@ -38,8 +36,6 @@ class YoutubeViewModel(
         runBlocking {
             async {
                 getHomeVideoList()
-
-//                displayVideo()
             }
         }
     }
@@ -67,6 +63,18 @@ class YoutubeViewModel(
             return youtubeVideoRepository.getChannelDetails(channelId = channelId)
         } catch (e: Exception) {
             Log.i("ex_mess getChannelDetails", e.toString())
+            return null
+        }
+    }
+
+    suspend fun getCommentList(): YoutubeVideoComment? {
+        try {
+            return youtubeVideoRepository.getVideoCommentList((watchVideoUiState as WatchVideoUiState.Success).youtubeVideoItem.id)
+        } catch (e: ClassCastException) {
+            Log.i("ex_getComment", "getComment executed when watchScreenUiState is Error/Loading")
+            return null
+        } catch (e: Exception) {
+            Log.i("ex_getComment", e.toString())
             return null
         }
     }
