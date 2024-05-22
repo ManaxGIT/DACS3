@@ -1,9 +1,11 @@
 package com.example.video_explorer.ui.screen
 
+import android.util.Log
 import com.example.video_explorer.R
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material3.Icon
@@ -18,6 +20,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.video_explorer.data.state.WatchVideoUiState
 import com.example.video_explorer.data.youtubeData.parts.Localized
 import com.example.video_explorer.data.youtubeData.VideoItem
 import com.example.video_explorer.data.youtubeData.parts.PageInfo
@@ -29,6 +32,18 @@ import com.example.video_explorer.ui.YouTubeVideoPlayer
 
 @Composable
 fun WatchVideoScreen(
+    watchVideoUiState: WatchVideoUiState
+) {
+    Log.i("ex_", "WatchVideoScreen Run Start")
+    when(watchVideoUiState) {
+        is WatchVideoUiState.Loading -> LoadingScreen(modifier = Modifier.fillMaxWidth())
+        is WatchVideoUiState.Success -> WatchVideo(video = watchVideoUiState.youtubeVideoItem)
+        is WatchVideoUiState.Error -> ErrorScreen(errorNote = "Watch Video Screen Is Error")
+    }
+}
+
+@Composable
+fun WatchVideo(
     video: VideoItem
 ) {
     Column(
@@ -74,6 +89,7 @@ fun LikeDislikeIcon(iconId: Int, count: String = "-1") {
 
     }
 }
+
 private fun calculateLike(view: String): String {
     val viewNumber = view.toDouble()
     if(viewNumber >= 1000000000)
@@ -142,5 +158,5 @@ fun WatchVideoScreenPreview() {
         items = listOf(videoItem),
         pageInfo = pageInfo
     )
-    WatchVideoScreen(video = fakeVideo.items[0])
+    WatchVideo(video = fakeVideo.items[0])
 }

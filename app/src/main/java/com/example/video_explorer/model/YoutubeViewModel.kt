@@ -22,6 +22,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
 import java.io.IOException
 import java.lang.ClassCastException
+import java.net.UnknownHostException
 
 class YoutubeViewModel(
     private val youtubeVideoRepository: YoutubeVideoRepository
@@ -37,9 +38,8 @@ class YoutubeViewModel(
         runBlocking {
             async {
                 getHomeVideoList()
-            }.await()
-            async {
-                displayVideo((homeScreenUiState as HomeScreenUiState.Success).videoList.items[0])
+
+//                displayVideo()
             }
         }
     }
@@ -57,6 +57,9 @@ class YoutubeViewModel(
         signInUiState = SignInUiState.NotSignedIn()
     }
 
+    fun setWatchScreenUiState(watchVideoUiState: WatchVideoUiState) {
+        this.watchVideoUiState = watchVideoUiState
+    }
 
     suspend fun getChannelDetails(channelId: String): YoutubeChannel? {
         try {
@@ -71,7 +74,7 @@ class YoutubeViewModel(
     suspend private fun getHomeVideoList() {
         Log.i("ex_mess", "ViewModel getHomeVideoList Run Start")
         try {
-            var videoList: YoutubeVideo = youtubeVideoRepository.getVideoDetails("7lCDEYXw3mM,EoNOWVYKyo0,RyTb5genMmE,D7obfQ26V1M,-ljpcKRJdA8,C3GouGa0noM")
+            var videoList: YoutubeVideo = youtubeVideoRepository.getVideoDetails("7pFAqHpLIHM,7lCDEYXw3mM,EoNOWVYKyo0,RyTb5genMmE,D7obfQ26V1M,-ljpcKRJdA8,C3GouGa0noM")
 //            delay(6000)
             videoList.items.forEach{ video->
                 val youtubeChannel = getChannelDetails(video.snippet.channelId)
@@ -79,30 +82,19 @@ class YoutubeViewModel(
                     video.channelItem = youtubeChannel.items[0]
                 }
             }
+
             homeScreenUiState = HomeScreenUiState.Success(
                 videoList = videoList
             )
-            Log.i("ex_mess", "ViewModel getHomeVideoList Run End")
+            Log.i("ex_mess", "ViewModel getHomeVideoList Run Success")
         } catch (e: IOException) {
             homeScreenUiState = HomeScreenUiState.Error("No Internet Connection")
-            Log.i("ex_mess3", e.toString())
+            Log.i("ex_mess getHomeVideoList", e.toString())
         } catch (e: Exception) {
             homeScreenUiState = HomeScreenUiState.Error()
             Log.i("ex_mess4", e.toString())
         }
-    }
-
-
-    suspend private fun displayVideo(video: VideoItem) {
-        Log.i("ex_mess", "ViewModel displayVideo Run Start")
-        try {
-            watchVideoUiState = WatchVideoUiState.Success(video)
-        }  catch (e: Exception) {
-            Log.i("ex_mess", "No Internet At ViewModel")
-            homeScreenUiState = HomeScreenUiState.Error()
-            watchVideoUiState = WatchVideoUiState.Error
-        }
-        Log.i("ex_mess", "ViewModel displayVideo Run End")
+        Log.i("ex_mess", "ViewModel getHomeVideoList Run End")
     }
 
     companion object {

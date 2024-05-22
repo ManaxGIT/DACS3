@@ -38,7 +38,6 @@ import com.example.video_explorer.model.YoutubeViewModel
 import com.example.video_explorer.ui.Screen
 import okio.utf8Size
 import java.text.SimpleDateFormat
-import java.util.Calendar
 import java.util.Date
 import java.util.TimeZone
 
@@ -50,13 +49,7 @@ fun HomeScreen(
     contentPadding: PaddingValues = PaddingValues(0.dp),
 ) {
     Log.i("ex_mess", "HomeScreen Run Start")
-//    when(watchVideoUiState) {
-//        is WatchVideoUiState.Loading -> LoadingScreen(modifier = modifier.fillMaxSize())
-//        is WatchVideoUiState.SignedIn -> ErrorScreen(errorNote = watchVideoUiState.youtubeVideo.items[0].snippet.title)
-//        is WatchVideoUiState.Error -> ErrorScreen(errorNote = "Something Unusual Happened")
-//
     val homeScreenUiState = youtubeViewModel.homeScreenUiState
-    val watchVideoUiState = youtubeViewModel.watchVideoUiState
     when(homeScreenUiState) {
         is HomeScreenUiState.Loading -> {
             LoadingScreen(modifier = modifier.fillMaxSize())
@@ -65,8 +58,8 @@ fun HomeScreen(
         is HomeScreenUiState.Success -> {
             Log.i("ex_mess", "HomeScreen Is Success")
             HomeScreenList(
-                watchVideoUiState = watchVideoUiState,
                 homeScreenUiState = homeScreenUiState,
+                youtubeViewModel = youtubeViewModel,
                 navController = navController
             )
         }
@@ -79,8 +72,8 @@ fun HomeScreen(
 
 @Composable
 private fun HomeScreenList(
-    watchVideoUiState: WatchVideoUiState,
     homeScreenUiState: HomeScreenUiState,
+    youtubeViewModel: YoutubeViewModel,
     navController: NavHostController,
     modifier: Modifier = Modifier
 ) {
@@ -89,8 +82,8 @@ private fun HomeScreenList(
             VideoItem(
                 video = videoItem,
                 onClick = {
-                    (watchVideoUiState as WatchVideoUiState.Success).setWatchVideo(video = videoItem)
                     navController.navigate(Screen.WatchVideo.name)
+                    youtubeViewModel.setWatchScreenUiState(WatchVideoUiState.Success(videoItem))
                 }
             )
         }
@@ -136,7 +129,7 @@ fun VideoItem(video: VideoItem, onClick: () -> Unit, modifier: Modifier= Modifie
                 if (videoTitle.utf8Size() > 70)
                     videoTitle = "${videoTitle.substring(0,70)}..."
 
-                var channelTitle = "${channel.snippet.title} · ${calculateView(video.statistics.viewCount)} lượt xem · ${calculateTime(video.snippet.publishedAt)}"
+                var channelTitle = "${channel.snippet.title} · ${calculateView(video.statistics.viewCount)} · ${calculateTime(video.snippet.publishedAt)}"
                 Text(
                     text = videoTitle,
                     style = TextStyle(fontWeight = FontWeight.Bold, fontSize = 18.sp)
@@ -150,15 +143,15 @@ fun VideoItem(video: VideoItem, onClick: () -> Unit, modifier: Modifier= Modifie
 private fun calculateView(view: String): String {
     val viewNumber = view.toDouble()
     if(viewNumber >= 1000000000)
-        return "${String.format("%.1f", viewNumber / 1000000000)} T"
+        return "${String.format("%.1f", viewNumber / 1000000000)} T lượt xem"
     else if (viewNumber >= 10000000)
-        return "${(viewNumber / 1000000).toInt()} Tr"
+        return "${(viewNumber / 1000000).toInt()} Tr lượt xem"
     else if (viewNumber >= 1000000)
-        return "${String.format("%.1f", viewNumber / 1000000)} Tr"
+        return "${String.format("%.1f", viewNumber / 1000000)} Tr lượt xem"
     else if (viewNumber >= 10000)
-        return "${(viewNumber / 1000).toInt()} N"
+        return "${(viewNumber / 1000).toInt()} N lượt xem"
     else if (viewNumber >= 1000)
-        return "${String.format("%.1f", viewNumber / 1000)} N"
+        return "${String.format("%.1f", viewNumber / 1000)} N lượt xem"
     else
         return view
 }
@@ -172,12 +165,12 @@ private fun calculateTime(start: String): String {
 
     val diff = (currentTime.time - startTime.time) / 1000
 
-    if (currentTime.year - startTime.year >= 1)
+    if (currentTime.year - startTime.year >= 1 && diff / (60*60) >= (24*30*12))
         return "${currentTime.year - startTime.year} năm trước"
-    else if (currentTime.month - startTime.month >= 1)
-        return "${currentTime.month - startTime.month} tháng trước"
-    else if (currentTime.date - startTime.date >= 1 && diff / (60*60) >= 24)
-        return "${currentTime.date - startTime.date} ngày trước"
+    else if ((currentTime.month - startTime.month + 12) % 12 >= 1 && diff / (60*60) >= (24*30))
+        return "${(currentTime.month - startTime.month + 12) % 12} tháng trước"
+    else if ((currentTime.date - startTime.date + 31) % 31 >= 1 && diff / (60*60) >= 24)
+        return "${(currentTime.date - startTime.date + 31) % 31} ngày trước"
     else if (diff / (60*60) >= 1)
         return "${diff / (60*60)} giờ trước"
     else
