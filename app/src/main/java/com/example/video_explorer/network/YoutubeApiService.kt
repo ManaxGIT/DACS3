@@ -10,7 +10,7 @@ interface YoutubeApiService {
     @GET("videos")
     suspend fun getVideoDetails(
         @Query("id") videoId: String,
-        @Query("key") apiKey: String = "AIzaSyDhnqxvf2uI6GOAkn7A-CEWcyErH2YSdfI",
+        @Query("key") apiKey: String = "AIzaSyDhnqxvf2uI6GOAkn7A-CEWcyErH2YSdf",
         @Query("part") part: String = "snippet,statistics"
     ): YoutubeVideo
 }
