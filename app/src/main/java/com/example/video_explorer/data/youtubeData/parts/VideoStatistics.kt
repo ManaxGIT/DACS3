@@ -7,7 +7,7 @@ import kotlinx.serialization.Serializable
 @Serializable
 data class VideoStatistics(
     @SerialName("commentCount")
-    val commentCount: String? = "0",
+    val commentCount: String = "0",
     @SerialName("favoriteCount")
     val favoriteCount: String,
     @SerialName("likeCount")

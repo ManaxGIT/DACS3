@@ -21,7 +21,6 @@ import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
 import coil.compose.rememberAsyncImagePainter
 import com.example.video_explorer.data.state.HomeScreenUiState
-import com.example.video_explorer.data.state.WatchVideoUiState
 import com.example.video_explorer.data.youtubeData.ChannelItem
 import com.example.video_explorer.data.youtubeData.VideoItem
 import com.example.video_explorer.data.youtubeData.YoutubeVideo
@@ -38,10 +37,7 @@ import com.example.video_explorer.model.YoutubeViewModel
 import com.example.video_explorer.ui.Screen
 import com.example.video_explorer.ui.render.calculateTime
 import com.example.video_explorer.ui.render.calculateView
-import okio.utf8Size
-import java.text.SimpleDateFormat
-import java.util.Date
-import java.util.TimeZone
+import com.example.video_explorer.ui.render.reduceStringLength
 
 @Composable
 fun HomeScreen(
@@ -85,7 +81,7 @@ private fun HomeScreenList(
                 video = videoItem,
                 onClick = {
                     navController.navigate(Screen.WatchVideo.name)
-                    youtubeViewModel.setWatchScreenUiState(WatchVideoUiState.Success(videoItem))
+                    youtubeViewModel.setWatchScreenUiStateToSuccess(videoItem)
                 }
             )
         }
@@ -127,16 +123,11 @@ fun VideoItem(video: VideoItem, onClick: () -> Unit, modifier: Modifier= Modifie
             Column(
                 modifier = Modifier.padding(start = 8.dp)
             ) {
-                var videoTitle = video.snippet.title
-                if (videoTitle.utf8Size() > 70)
-                    videoTitle = "${videoTitle.substring(0,70)}..."
-
-                var channelTitle = "${channel.snippet.title} · ${calculateView(video.statistics.viewCount)} lượt xem · ${calculateTime(video.snippet.publishedAt)}"
                 Text(
-                    text = videoTitle,
+                    text = reduceStringLength(video.snippet.title, 70),
                     style = TextStyle(fontWeight = FontWeight.Bold, fontSize = 18.sp)
                 )
-                Text(text = channelTitle)
+                Text(text = "${channel.snippet.title} · ${calculateView(video.statistics.viewCount)} lượt xem · ${calculateTime(video.snippet.publishedAt)}")
             }
         }
     }

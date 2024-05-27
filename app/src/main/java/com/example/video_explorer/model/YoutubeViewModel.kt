@@ -14,11 +14,14 @@ import com.example.video_explorer.data.state.WatchVideoUiState
 import com.example.video_explorer.data.YoutubeVideoRepository
 import com.example.video_explorer.data.state.SignInUiState
 import com.example.video_explorer.data.user.UserData
+import com.example.video_explorer.data.youtubeData.VideoItem
 import com.example.video_explorer.data.youtubeData.YoutubeChannel
 import com.example.video_explorer.data.youtubeData.YoutubeVideo
 import com.example.video_explorer.data.youtubeData.YoutubeVideoComment
 import kotlinx.coroutines.async
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
+import retrofit2.HttpException
 import java.io.IOException
 import kotlin.ClassCastException
 
@@ -53,8 +56,27 @@ class YoutubeViewModel(
         signInUiState = SignInUiState.NotSignedIn()
     }
 
-    fun setWatchScreenUiState(watchVideoUiState: WatchVideoUiState) {
-        this.watchVideoUiState = watchVideoUiState
+    fun setWatchScreenUiStateToSuccess(videoItem: VideoItem) {
+        this.watchVideoUiState = WatchVideoUiState.Success(youtubeVideoItem = videoItem)
+        runBlocking {
+            (watchVideoUiState as WatchVideoUiState.Success).setCommentList(getCommentList())
+            Log.i("ex_getComment", "getComment Run End")
+        }
+    }
+
+    suspend fun getCommentList(): YoutubeVideoComment? {
+        return try {
+            youtubeVideoRepository.getVideoCommentList((watchVideoUiState as WatchVideoUiState.Success).youtubeVideoItem.id)
+        } catch (e: ClassCastException) {
+            Log.i("ex_getComment", "getComment executed when watchScreenUiState is Error/Loading")
+            null
+        } catch (e: HttpException) {
+            Log.i("ex_getComment", "Comment function is turned off in this video")
+            null
+        } catch (e: Exception) {
+            Log.i("ex_getComment", e.toString())
+            null
+        }
     }
 
     suspend fun getChannelDetails(channelId: String): YoutubeChannel? {
@@ -67,22 +89,10 @@ class YoutubeViewModel(
         }
     }
 
-    suspend fun getCommentList(): YoutubeVideoComment? {
-        try {
-            return youtubeVideoRepository.getVideoCommentList((watchVideoUiState as WatchVideoUiState.Success).youtubeVideoItem.id)
-        } catch (e: ClassCastException) {
-            Log.i("ex_getComment", "getComment executed when watchScreenUiState is Error/Loading")
-            return null
-        } catch (e: Exception) {
-            Log.i("ex_getComment", e.toString())
-            return null
-        }
-    }
-
     suspend private fun getHomeVideoList() {
         Log.i("ex_mess", "ViewModel getHomeVideoList Run Start")
         try {
-            var videoList: YoutubeVideo = youtubeVideoRepository.getVideoDetails("7pFAqHpLIHM,7lCDEYXw3mM,EoNOWVYKyo0,RyTb5genMmE,D7obfQ26V1M,-ljpcKRJdA8,C3GouGa0noM")
+            var videoList: YoutubeVideo = youtubeVideoRepository.getVideoDetails("NESs1KPmtKM,7pFAqHpLIHM,7lCDEYXw3mM,EoNOWVYKyo0,RyTb5genMmE,D7obfQ26V1M,-ljpcKRJdA8,C3GouGa0noM")
 //            delay(6000)
             videoList.items.forEach{ video->
                 val youtubeChannel = getChannelDetails(video.snippet.channelId)
