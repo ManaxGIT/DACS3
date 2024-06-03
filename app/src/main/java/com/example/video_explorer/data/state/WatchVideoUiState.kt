@@ -5,7 +5,8 @@ import com.example.video_explorer.data.youtubeData.YoutubeVideo
 import com.example.video_explorer.data.youtubeData.YoutubeVideoComment
 
 sealed interface WatchVideoUiState {
-    data class Success(var youtubeVideoItem: VideoItem, var youtubeVideoComment: YoutubeVideoComment? = null) : WatchVideoUiState {
+    data class Success(var youtubeVideoItem: VideoItem) : WatchVideoUiState {
+        var youtubeVideoComment: YoutubeVideoComment? = null
         fun setCommentList(commentList: YoutubeVideoComment?) {
             youtubeVideoComment = commentList
         }

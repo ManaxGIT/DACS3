@@ -4,23 +4,31 @@ import android.util.Log
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import com.example.video_explorer.R
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.absolutePadding
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material3.BottomSheetScaffold
+import androidx.compose.material3.BottomSheetScaffoldState
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
+import androidx.compose.material3.rememberBottomSheetScaffoldState
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -59,8 +67,17 @@ import com.example.video_explorer.ui.render.calculateSubscriber
 import com.example.video_explorer.ui.render.calculateTime
 import com.example.video_explorer.ui.render.calculateView
 import com.example.video_explorer.ui.render.getFirstTag
+import com.example.video_explorer.ui.render.getRandomComment
 import com.example.video_explorer.ui.render.reduceStringLength
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.launch
 
+private sealed interface Sheet {
+    object Description: Sheet
+    object Comment: Sheet
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun WatchVideoScreen(
     watchVideoUiState: WatchVideoUiState
@@ -68,7 +85,34 @@ fun WatchVideoScreen(
     Log.i("ex_", "WatchVideoScreen Run Start")
     when(watchVideoUiState) {
         is WatchVideoUiState.Loading -> LoadingScreen(modifier = Modifier.fillMaxWidth())
-        is WatchVideoUiState.Success -> WatchVideo(video = watchVideoUiState.youtubeVideoItem, commentList = watchVideoUiState.youtubeVideoComment)
+        is WatchVideoUiState.Success -> {
+            val scaffoldState = rememberBottomSheetScaffoldState()
+            val scope = rememberCoroutineScope()
+            var sheetContent: Sheet by remember { mutableStateOf(Sheet.Description) }
+
+            BottomSheetScaffold(
+                scaffoldState = scaffoldState,
+                sheetContent =  {
+                    BottomSheetPart(bottomSheetContent = sheetContent)
+                },
+                sheetPeekHeight = 0.dp,
+            ) {
+                WatchVideo(
+                    video = watchVideoUiState.youtubeVideoItem,
+                    commentList = watchVideoUiState.youtubeVideoComment,
+                    openDescription = { scope.launch {
+                        sheetContent = Sheet.Description
+                        scaffoldState.bottomSheetState.expand()
+
+                    }},
+                    openComment = { scope.launch {
+                        sheetContent = Sheet.Comment
+                        scaffoldState.bottomSheetState.expand()
+                    }}
+                )
+            }
+
+        }
         is WatchVideoUiState.Error -> ErrorScreen(errorNote = "Watch Video Screen Is Error")
     }
 }
@@ -77,7 +121,10 @@ fun WatchVideoScreen(
 fun WatchVideo(
     video: VideoItem,
     commentList: YoutubeVideoComment?,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    openDescription: () -> Unit,
+    openComment: () -> Unit,
+
 ) {
     Column(
         modifier = modifier
@@ -93,7 +140,7 @@ fun WatchVideo(
                 modifier = Modifier
                     .padding(bottom = 4.dp)
                     .fillMaxWidth()
-                    .clickable { }
+                    .clickable { openDescription() }
             ) {
                 Text(
                     text = reduceStringLength(video.snippet.title, length = 81),
@@ -147,7 +194,11 @@ fun WatchVideo(
                 LikeDislikeIcon(iconId = R.drawable.thumb_down, onClick = {})
             }
 
-            CommentBox(commentList = commentList, commentCount = video.statistics.commentCount)
+            CommentBox(
+                commentList = commentList,
+                commentCount = video.statistics.commentCount,
+                onOpenClick = { openComment() }
+            )
         }
 
     }
@@ -157,12 +208,14 @@ fun WatchVideo(
 fun CommentBox(
     commentList: YoutubeVideoComment?,
     commentCount: String,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    onOpenClick: () -> Unit
 ) {
     Card(
         modifier = modifier
             .fillMaxWidth()
             .padding(top = 8.dp, end = 8.dp)
+            .clickable { onOpenClick() }
     ) {
         Column(
             modifier = Modifier.padding(8.dp)
@@ -184,15 +237,8 @@ fun CommentBox(
                     )
             }
 
-            if (commentList == null) {
-                Text(
-                    text = "Tính năng bình luận đã bị tắt.",
-                    modifier = Modifier
-                        .padding(8.dp)
-                )
-            } else {
-                val randomNumber = (0..commentList.items.size).random()
-                val randomComment = commentList.items[randomNumber]
+            if (commentList != null) {
+                val randomComment = getRandomComment(commentList)
                 Row(
                     modifier = Modifier
                         .padding(top = 8.dp)
@@ -207,6 +253,12 @@ fun CommentBox(
                     )
                     Text(text = randomComment.snippet.topLevelComment.snippet.textOriginal)
                 }
+            } else {
+                Text(
+                    text = "Tính năng bình luận đã bị tắt.",
+                    modifier = Modifier
+                        .padding(8.dp)
+                )
             }
 
         }
@@ -224,7 +276,7 @@ fun LikeDislikeIcon(iconId: Int, count: String = "-1", onClick: () -> Unit, modi
             tint = Color.Gray,
             modifier = Modifier
                 .size(24.dp)
-                .clickable { onClick }
+                .clickable { onClick() }
         )
         Spacer(modifier = Modifier.padding(2.dp))
         if (!count.equals("-1"))
@@ -235,12 +287,32 @@ fun LikeDislikeIcon(iconId: Int, count: String = "-1", onClick: () -> Unit, modi
     }
 }
 
+@Composable
+private fun BottomSheetPart(
+    bottomSheetContent: Sheet
+) {
+    when(bottomSheetContent) {
+        is Sheet.Description -> {
+            DecriptionBottomSheet()
+        }
+        is Sheet.Comment -> {
+            CommentBottomSheet()
+        }
+    }
+}
+
+@Composable
+fun DecriptionBottomSheet() {
+
+}
+
+@Composable
+fun CommentBottomSheet() {
+
+}
 
 
-
-
-
-
+@OptIn(ExperimentalMaterial3Api::class)
 @Preview(showBackground = true)
 @Composable
 fun WatchVideoScreenPreview() {
@@ -362,5 +434,5 @@ fun WatchVideoScreenPreview() {
         items = listOf(videoItem),
         pageInfo = pageInfo
     )
-    WatchVideo(video = fakeVideo.items[0], commentList = mockResponse)
+    WatchVideo(video = fakeVideo.items[0], commentList = mockResponse, modifier = Modifier, { }, { })
 }

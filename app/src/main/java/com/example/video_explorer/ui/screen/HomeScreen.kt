@@ -51,10 +51,10 @@ fun HomeScreen(
     when(homeScreenUiState) {
         is HomeScreenUiState.Loading -> {
             LoadingScreen(modifier = modifier.fillMaxSize())
-            Log.i("ex_mess", "HomeScreen Is Loading")
+//            Log.i("ex_mess", "HomeScreen Is Loading")
         }
         is HomeScreenUiState.Success -> {
-            Log.i("ex_mess", "HomeScreen Is Success")
+//            Log.i("ex_mess", "HomeScreen Is Success")
             HomeScreenList(
                 homeScreenUiState = homeScreenUiState,
                 youtubeViewModel = youtubeViewModel,
@@ -62,7 +62,7 @@ fun HomeScreen(
             )
         }
         is HomeScreenUiState.Error -> {
-            Log.i("ex_mess", "HomeScreen Is Error")
+//            Log.i("ex_mess", "HomeScreen Is Error")
             ErrorScreen(errorNote = homeScreenUiState.errorNote)
         }
     }
