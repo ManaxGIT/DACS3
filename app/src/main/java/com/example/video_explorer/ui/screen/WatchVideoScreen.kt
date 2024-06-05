@@ -13,16 +13,19 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.BottomSheetScaffold
-import androidx.compose.material3.BottomSheetScaffoldState
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
+import androidx.compose.material3.Divider
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberBottomSheetScaffoldState
-import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -69,7 +72,6 @@ import com.example.video_explorer.ui.render.calculateView
 import com.example.video_explorer.ui.render.getFirstTag
 import com.example.video_explorer.ui.render.getRandomComment
 import com.example.video_explorer.ui.render.reduceStringLength
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 
 private sealed interface Sheet {
@@ -93,7 +95,12 @@ fun WatchVideoScreen(
             BottomSheetScaffold(
                 scaffoldState = scaffoldState,
                 sheetContent =  {
-                    BottomSheetPart(bottomSheetContent = sheetContent)
+                    BottomSheetPart(
+                        bottomSheetContent = sheetContent,
+                        video = watchVideoUiState.youtubeVideoItem,
+                        commentList = watchVideoUiState.youtubeVideoComment,
+                        modifier = Modifier.height(489.dp)
+                    )
                 },
                 sheetPeekHeight = 0.dp,
             ) {
@@ -170,7 +177,7 @@ fun WatchVideo(
                     style = TextStyle(fontWeight = FontWeight.Bold, fontSize = 14.sp)
                 )
                 Spacer(modifier = Modifier.width(12.dp))
-                Text(text = "${calculateSubscriber(video.channelItem!!.statistics.subscriberCount)}")
+                Text(text = calculateSubscriber(video.channelItem!!.statistics.subscriberCount))
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Absolute.Right) {
                     Button(
                         onClick = {},
@@ -215,7 +222,7 @@ fun CommentBox(
         modifier = modifier
             .fillMaxWidth()
             .padding(top = 8.dp, end = 8.dp)
-            .clickable { onOpenClick() }
+            .clickable { if (commentList != null) onOpenClick() }
     ) {
         Column(
             modifier = Modifier.padding(8.dp)
@@ -247,6 +254,7 @@ fun CommentBox(
                         painter = rememberAsyncImagePainter(model = randomComment.snippet.topLevelComment.snippet.authorProfileImageUrl),
                         contentDescription = null,
                         modifier = Modifier
+                            .padding(end = 8.dp)
                             .size(32.dp)
                             .clip(CircleShape),
                         contentScale = ContentScale.Crop
@@ -289,150 +297,286 @@ fun LikeDislikeIcon(iconId: Int, count: String = "-1", onClick: () -> Unit, modi
 
 @Composable
 private fun BottomSheetPart(
-    bottomSheetContent: Sheet
+    bottomSheetContent: Sheet,
+    video: VideoItem,
+    commentList: YoutubeVideoComment?,
+    modifier: Modifier = Modifier
 ) {
-    when(bottomSheetContent) {
-        is Sheet.Description -> {
-            DecriptionBottomSheet()
-        }
-        is Sheet.Comment -> {
-            CommentBottomSheet()
+    Column(
+        modifier = modifier
+            .fillMaxWidth()
+    ) {
+        when(bottomSheetContent) {
+            is Sheet.Description -> {
+                DecriptionBottomSheet(video = video)
+            }
+            is Sheet.Comment -> {
+                CommentBottomSheet(commentList = commentList)
+            }
         }
     }
 }
 
 @Composable
-fun DecriptionBottomSheet() {
-
-}
-
-@Composable
-fun CommentBottomSheet() {
-
-}
-
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Preview(showBackground = true)
-@Composable
-fun WatchVideoScreenPreview() {
-    val thumbnails = Thumbnails()
-
-    val localized = Localized(
-        title = "Google I/O 101: Q&A On Using Google APIs",
-        description = "Antonio Fuentes speaks to us and takes questions on working with Google APIs and OAuth 2.0."
-    )
-
-    val snippet = Snippet(
-        publishedAt = "2012-06-20T23:12:38Z",
-        channelId = "UC_x5XG1OV2P6uZZ5FSM9Ttw",
-        title = "Google I/O 101: Q&A On Using Google APIs Quốc hội sẽ phê chuẩn miễn nhiệm bộ trưởng Bộ Công an đối với đại tướng Tô Lâm\n",
-        description = "Antonio Fuentes speaks to us and takes questions on working with Google APIs and OAuth 2.0.",
-        thumbnails = thumbnails,
-        channelTitle = "Google for Developers",
-        tags = listOf("api", "gdl", "i-o"),
-        categoryId = "28",
-        liveBroadcastContent = "none",
-        localized = localized
-    )
-
-    val statistics = VideoStatistics(
-        viewCount = "13255",
-        likeCount = "8500000000",
-        favoriteCount = "0",
-        commentCount = "10"
-    )
-    val mockChannel = ChannelItem(
-        kind = "youtube#channel",
-        etag = "mock_etag",
-        id = "UCMockedChannelId",
-        snippet = ChannelSnippet(
-            title = "Mocked Channel Titleeeeeeee",
-            description = "This is a mock channel description",
-            customUrl = "mocked_custom_url",
-            publishedAt = "2024-05-21T10:20:00Z", // Replace with desired publish date
-            thumbnails = Thumbnails(
-                default = Default(url = "https://yt3.ggpht.com/ebid6d64FrF3wZMqdjxRpoKVl-FpFJv4ovUbG0wTMXJ7EkuC5Qn7cRszvLvxXBwrbDlLMYu76pc=s88-c-k-c0x00ffffff-no-rj")
-            ),
-            localized = Localized("","")
-        ),
-        statistics = ChannelStatistics(
-            hiddenSubscriberCount = false,
-            subscriberCount = "1234491",
-            videoCount = "0",
-            viewCount = "0"
-        ),
-        topicDetails = TopicDetails(
-            topicCategories = listOf("",""),
-            topicIds = listOf("","")
+fun DecriptionBottomSheet(video: VideoItem) {
+    Column {
+        Text(
+            text = "Nội dung mô tả",
+            style = TextStyle(fontWeight = FontWeight.Bold, fontSize = 24.sp),
+            modifier = Modifier.padding(8.dp)
         )
-    )
+        Divider(color = Color.Gray, thickness = 1.dp, modifier = Modifier.fillMaxWidth())
 
-    val videoItem = VideoItem(
-        etag = "",
-        kind = "",
-        id = "7lCDEYXw3mM",
-        snippet = snippet,
-        statistics = statistics,
-        channelItem = mockChannel
-    )
+        Column(
+            modifier = Modifier
+                .padding(start = 8.dp, end = 8.dp)
+                .verticalScroll(rememberScrollState())
+        ) {
+            Spacer(modifier = Modifier.height(8.dp))
+            Text(
+                text = video.snippet.title,
+                style = TextStyle(fontWeight = FontWeight.Bold, fontSize = 18.sp)
+            )
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 32.dp, vertical = 16.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween,
 
-    val pageInfo = PageInfo(
+                ) {
+                val upperTextStyle = TextStyle(fontWeight = FontWeight.Bold, fontSize = 18.sp)
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Text(
+                        text = calculateLike(video.statistics.likeCount),
+                        style = upperTextStyle
+                    )
+                    Text(text = "Lượt thích")
+                }
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Text(
+                        text = video.statistics.viewCount,
+                        style = upperTextStyle
+                    )
+                    Text(text = "Lượt xem")
+                }
+                val date = video.snippet.publishedAt.substring(8,10)
+                val month = video.snippet.publishedAt.substring(5,7)
+                val year = video.snippet.publishedAt.substring(0,4)
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Text(
+                        text = "${if(date.substring(0,1) == "0") date.substring(1,2) else date} thg ${if(month.substring(0,1) == "0") month.substring(1,2) else month}",
+                        style = upperTextStyle
+                    )
+                    Text(text = year)
+                }
+            }
+            Card(
+            ) {
+                Text(
+                    text = video.snippet.description,
+                    modifier = Modifier.padding(8.dp)
+                )
+            }
+        }
+    }
+}
+
+@Composable
+fun CommentBottomSheet(commentList: YoutubeVideoComment?) {
+    Column {
+        Text(
+            text = "Bình luận",
+            style = TextStyle(fontWeight = FontWeight.Bold, fontSize = 24.sp),
+            modifier = Modifier.padding(8.dp)
+        )
+        Divider(color = Color.Gray, thickness = 1.dp, modifier = Modifier.fillMaxWidth())
+
+        LazyColumn(modifier = Modifier.fillMaxWidth()) {
+            items(commentList!!.items) { commentItem ->
+                Row(
+                    modifier = Modifier.padding(vertical = 8.dp)
+                ) {
+                    Image(
+                        painter = rememberAsyncImagePainter(model = commentItem.snippet.topLevelComment.snippet.authorProfileImageUrl),
+                        contentDescription = null,
+                        modifier = Modifier
+                            .padding(start = 8.dp, end = 8.dp)
+                            .size(20.dp)
+                            .clip(CircleShape),
+                        contentScale = ContentScale.Crop
+                    )
+                    Column {
+                        Text(
+                            text = "${commentItem.snippet.topLevelComment.snippet.authorDisplayName} · ${calculateTime(commentItem.snippet.topLevelComment.snippet.updatedAt)} ${if(commentItem.snippet.topLevelComment.snippet.publishedAt != commentItem.snippet.topLevelComment.snippet.updatedAt) "(đã chỉnh sửa)" else ""}",
+                            style = TextStyle(color = Color.DarkGray))
+                        Text(
+                            text = commentItem.snippet.topLevelComment.snippet.textOriginal,
+                            style = TextStyle(color = Color.Black, fontSize = 15.sp)
+                        )
+                    }
+                }
+            }
+        }
+
+    }
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+val thumbnails = Thumbnails()
+
+val localized = Localized(
+    title = "Google I/O 101: Q&A On Using Google APIs",
+    description = "Antonio Fuentes speaks to us and takes questions on working with Google APIs and OAuth 2.0."
+)
+
+val snippet = Snippet(
+    publishedAt = "2012-06-20T23:12:38Z",
+    channelId = "UC_x5XG1OV2P6uZZ5FSM9Ttw",
+    title = "Google I/O 101: Q&A On Using Google APIs Quốc hội sẽ phê chuẩn miễn nhiệm bộ trưởng Bộ Công an đối với đại tướng Tô Lâm\n",
+    description = "Antonio Fuentes speaks to us and takes questions on working with Google APIs and OAuth 2.0.",
+    thumbnails = thumbnails,
+    channelTitle = "Google for Developers",
+    tags = listOf("api", "gdl", "i-o"),
+    categoryId = "28",
+    liveBroadcastContent = "none",
+    localized = localized
+)
+
+val statistics = VideoStatistics(
+    viewCount = "13255",
+    likeCount = "8500000000",
+    favoriteCount = "0",
+    commentCount = "10"
+)
+val mockChannel = ChannelItem(
+    kind = "youtube#channel",
+    etag = "mock_etag",
+    id = "UCMockedChannelId",
+    snippet = ChannelSnippet(
+        title = "Mocked Channel Titleeeeeeee",
+        description = "This is a mock channel description",
+        customUrl = "mocked_custom_url",
+        publishedAt = "2024-05-21T10:20:00Z", // Replace with desired publish date
+        thumbnails = Thumbnails(
+            default = Default(url = "https://yt3.ggpht.com/ebid6d64FrF3wZMqdjxRpoKVl-FpFJv4ovUbG0wTMXJ7EkuC5Qn7cRszvLvxXBwrbDlLMYu76pc=s88-c-k-c0x00ffffff-no-rj")
+        ),
+        localized = Localized("","")
+    ),
+    statistics = ChannelStatistics(
+        hiddenSubscriberCount = false,
+        subscriberCount = "1234491",
+        videoCount = "0",
+        viewCount = "0"
+    ),
+    topicDetails = TopicDetails(
+        topicCategories = listOf("",""),
+        topicIds = listOf("","")
+    )
+)
+
+val videoItem = VideoItem(
+    etag = "",
+    kind = "",
+    id = "7lCDEYXw3mM",
+    snippet = snippet,
+    statistics = statistics,
+    channelItem = mockChannel
+)
+
+val pageInfo = PageInfo(
+    totalResults = 1,
+    resultsPerPage = 1
+)
+val mockResponse = YoutubeVideoComment(
+    kind = "youtube#commentThreadListResponse",
+    etag = "AJu8P3igGW7jVKpKpKixMKQsbnE",
+    nextPageToken = "Z2V0X25ld2VzdF9maXJzdC0tQ2dnSWdBUVZGN2ZST0JJRkNJY2dHQUFTQlFpb0lCZ0FFZ1VJaVNBWUFCSUZDSjBnR0FFU0JRaUlJQmdBR0FBaURRb0xDUC03aXE0R0VLRENnQW8=",
+    pageInfo = PageInfo(
         totalResults = 1,
         resultsPerPage = 1
-    )
-    val mockResponse = YoutubeVideoComment(
-        kind = "youtube#commentThreadListResponse",
-        etag = "AJu8P3igGW7jVKpKpKixMKQsbnE",
-        nextPageToken = "Z2V0X25ld2VzdF9maXJzdC0tQ2dnSWdBUVZGN2ZST0JJRkNJY2dHQUFTQlFpb0lCZ0FFZ1VJaVNBWUFCSUZDSjBnR0FFU0JRaUlJQmdBR0FBaURRb0xDUC03aXE0R0VLRENnQW8=",
-        pageInfo = PageInfo(
-            totalResults = 1,
-            resultsPerPage = 1
-        ),
-        items = listOf(
-            CommentItem(
-                kind = "youtube#commentThread",
-                etag = "PcNkxf05iZhB3fLY-E7M50zJkmc",
-                id = "UgxKMpi4Lh2-UR2XH5t4AaABAg",
-                snippet = CommentSnippet(
-                    channelId = "UCaizTs-t-jXjj8H0-S3ATYA",
-                    videoId = "SIm2W9TtzR0",
-                    topLevelComment = TopLevelComment(
-                        kind = "youtube#comment",
-                        etag = "xmeFFiGt2P3-Y4QYZLWlcCE-v8Q",
-                        id = "UgxKMpi4Lh2-UR2XH5t4AaABAg",
-                        snippet = TopLevelCommentSnippet(
-                            channelId = "UCaizTs-t-jXjj8H0-S3ATYA",
-                            videoId = "SIm2W9TtzR0",
-                            textDisplay = "Updated Video <a href=\"https://www.youtube.com/watch?v=A1III_DQU4I\">https://youtu.be/A1III_DQU4I?si=_8-d4OpoIHpr2jJm</a>",
-                            textOriginal = "Updated Video https://youtu.be/A1III_DQU4I?si=_8-d4OpoIHpr2jJm",
-                            authorDisplayName = "@analyticswithadam",
-                            authorProfileImageUrl = "https://yt3.ggpht.com/La5UQrwbtvM0aYMi95LUJZRX9maQUJeYm49VffEU3xSYxr-sEFLdOUqQI71UPNHBb2Ye7xNF7g=s48-c-k-c0x00ffffff-no-rj",
-                            authorChannelUrl = "http://www.youtube.com/@analyticswithadam",
-                            authorChannelId = AuthorChannelId(
-                                value = "UCaizTs-t-jXjj8H0-S3ATYA"
-                            ),
-                            canRate = true,
-                            viewerRating = "none",
-                            likeCount = 1,
-                            publishedAt = "2024-02-06T21:00:47Z",
-                            updatedAt = "2024-02-06T21:00:47Z"
-                        )
-                    ),
-                    canReply = true,
-                    totalReplyCount = 0,
-                    isPublic = true
-                )
+    ),
+    items = listOf(
+        CommentItem(
+            kind = "youtube#commentThread",
+            etag = "PcNkxf05iZhB3fLY-E7M50zJkmc",
+            id = "UgxKMpi4Lh2-UR2XH5t4AaABAg",
+            snippet = CommentSnippet(
+                channelId = "UCaizTs-t-jXjj8H0-S3ATYA",
+                videoId = "SIm2W9TtzR0",
+                topLevelComment = TopLevelComment(
+                    kind = "youtube#comment",
+                    etag = "xmeFFiGt2P3-Y4QYZLWlcCE-v8Q",
+                    id = "UgxKMpi4Lh2-UR2XH5t4AaABAg",
+                    snippet = TopLevelCommentSnippet(
+                        channelId = "UCaizTs-t-jXjj8H0-S3ATYA",
+                        videoId = "SIm2W9TtzR0",
+                        textDisplay = "Updated Video <a href=\"https://www.youtube.com/watch?v=A1III_DQU4I\">https://youtu.be/A1III_DQU4I?si=_8-d4OpoIHpr2jJm</a>",
+                        textOriginal = "Updated Video https://youtu.be/A1III_DQU4I?si=_8-d4OpoIHpr2jJm",
+                        authorDisplayName = "@analyticswithadam",
+                        authorProfileImageUrl = "https://yt3.ggpht.com/La5UQrwbtvM0aYMi95LUJZRX9maQUJeYm49VffEU3xSYxr-sEFLdOUqQI71UPNHBb2Ye7xNF7g=s48-c-k-c0x00ffffff-no-rj",
+                        authorChannelUrl = "http://www.youtube.com/@analyticswithadam",
+                        authorChannelId = AuthorChannelId(
+                            value = "UCaizTs-t-jXjj8H0-S3ATYA"
+                        ),
+                        canRate = true,
+                        viewerRating = "none",
+                        likeCount = 1,
+                        publishedAt = "2024-02-06T21:00:47Z",
+                        updatedAt = "2024-02-06T21:00:47Z"
+                    )
+                ),
+                canReply = true,
+                totalReplyCount = 0,
+                isPublic = true
             )
         )
     )
+)
 
 // Finally, create the YoutubeVideo object
-    val fakeVideo = YoutubeVideo(
-        etag = "",
-        kind = "",
-        items = listOf(videoItem),
-        pageInfo = pageInfo
-    )
+val fakeVideo = YoutubeVideo(
+    etag = "",
+    kind = "",
+    items = listOf(videoItem),
+    pageInfo = pageInfo
+)
+
+
+@Preview(showBackground = true)
+@Composable
+private fun WatchVideoScreenCommentPreview() {
+    CommentBottomSheet(commentList = mockResponse)
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun WatchVideoScreenDescriptionPreview() {
+    DecriptionBottomSheet(video = fakeVideo.items[0])
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun WatchVideoScreenPreview() {
+
     WatchVideo(video = fakeVideo.items[0], commentList = mockResponse, modifier = Modifier, { }, { })
 }

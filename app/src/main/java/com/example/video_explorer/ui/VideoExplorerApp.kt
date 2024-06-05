@@ -59,7 +59,7 @@ fun VideoExplorerApp(
     Log.i("ex_mess", "Video Explorer App Run")
     val navController: NavHostController = rememberNavController()
     val youtubeViewModel: YoutubeViewModel = viewModel(factory = YoutubeViewModel.Factory)
-    val scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior()
+    val scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior()
     val scope = rememberCoroutineScope()
     val googleAuthUiClient by lazy {
         GoogleAuthUiClient(
@@ -67,96 +67,100 @@ fun VideoExplorerApp(
             oneTapClient = Identity.getSignInClient(applicationContext)
         )
     }
-    Scaffold(
-        modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
-        topBar = { YoutubeTopAppBar(
-            scrollBehavior = scrollBehavior,
-            onProfileClick = {
-                if(navController.currentDestination?.route != Screen.ProfileScreen.name)
-                    navController.navigate(Screen.ProfileScreen.name)
-            }
-        ) }
-    ) { innerPadding ->
-        Surface(
-            modifier = Modifier.fillMaxSize()
+
+    Surface(
+        modifier = Modifier.fillMaxSize()
+    ) {
+        NavHost(
+            navController = navController,
+            startDestination = Screen.HomeScreen.name,
+            modifier = Modifier
         ) {
-            NavHost(
-                navController = navController,
-                startDestination = Screen.HomeScreen.name,
-                modifier = Modifier.padding(innerPadding)
-            ) {
-                composable(route = Screen.HomeScreen.name) {
+            composable(route = Screen.HomeScreen.name) {
+                Scaffold(
+                    modifier = Modifier
+                        .nestedScroll(scrollBehavior.nestedScrollConnection),
+                    topBar = {
+                        YoutubeTopAppBar(
+                            scrollBehavior = scrollBehavior,
+                            onProfileClick = {
+                                if(navController.currentDestination?.route != Screen.ProfileScreen.name)
+                                    navController.navigate(Screen.ProfileScreen.name)
+                            }
+                        )
+                    }
+                ) { innerPadding ->
                     HomeScreen(
                         youtubeViewModel = youtubeViewModel,
-                        navController = navController
+                        navController = navController,
+                        modifier = Modifier.padding(innerPadding)
                     )
                 }
-                composable(route = Screen.WatchVideo.name) {
-                    WatchVideoScreen(watchVideoUiState = youtubeViewModel.watchVideoUiState)
-                }
-                composable(route = Screen.LoginScreen.name) {
-                    LoginScreen(loginViewModel = SignInViewModel())
-                }
-                composable(route = Screen.ProfileScreen.name) {
-                    LaunchedEffect(key1 = Unit) {
-                        val currentSignedInUser = googleAuthUiClient.getSignedInUser()
-                        if(currentSignedInUser != null) {
+            }
+            composable(route = Screen.WatchVideo.name) {
+                WatchVideoScreen(watchVideoUiState = youtubeViewModel.watchVideoUiState)
+            }
+            composable(route = Screen.LoginScreen.name) {
+                LoginScreen(loginViewModel = SignInViewModel())
+            }
+            composable(route = Screen.ProfileScreen.name) {
+                LaunchedEffect(key1 = Unit) {
+                    val currentSignedInUser = googleAuthUiClient.getSignedInUser()
+                    if(currentSignedInUser != null) {
 //                            googleAuthUiClient.signOut()
 //                            youtubeViewModel.resetSignInUiState()
-                            youtubeViewModel.setSignInUiState(currentSignedInUser)
+                        youtubeViewModel.setSignInUiState(currentSignedInUser)
 //                            navController.navigate(route = Screen.ProfileScreen.name)
+                    }
+                }
+                val launcher = rememberLauncherForActivityResult(
+                    contract = ActivityResultContracts.StartIntentSenderForResult(),
+                    onResult = { result ->
+                        if(result.resultCode == RESULT_OK) {
+                            scope.launch {
+                                val signInResult = googleAuthUiClient.signInWithIntent(
+                                    intent = result.data ?: return@launch
+                                )
+                                youtubeViewModel.onSignInResult(signInResult)
+                            }
                         }
                     }
-                    val launcher = rememberLauncherForActivityResult(
-                        contract = ActivityResultContracts.StartIntentSenderForResult(),
-                        onResult = { result ->
-                            if(result.resultCode == RESULT_OK) {
-                                scope.launch {
-                                    val signInResult = googleAuthUiClient.signInWithIntent(
-                                        intent = result.data ?: return@launch
-                                    )
-                                    youtubeViewModel.onSignInResult(signInResult)
-                                }
-                            }
+                )
+                ProfileScreen(
+                    signInUiState = youtubeViewModel.signInUiState,
+                    onSignIn = {
+                        Log.i("ex_mess", "Begin sign in")
+                        scope.launch {
+                            val signInIntentSender = googleAuthUiClient.signIn()
+                            launcher.launch(
+                                IntentSenderRequest.Builder(
+                                    signInIntentSender ?: return@launch
+                                ).build()
+                            )
                         }
-                    )
-                    ProfileScreen(
-                        signInUiState = youtubeViewModel.signInUiState,
-                        onSignIn = {
-                            Log.i("ex_mess", "Begin sign in")
-                            scope.launch {
-                                val signInIntentSender = googleAuthUiClient.signIn()
-                                launcher.launch(
-                                    IntentSenderRequest.Builder(
-                                        signInIntentSender ?: return@launch
-                                    ).build()
-                                )
-                            }
-                            Log.i("ex_mess", "End sign in")
-                        },
-                        onSignOut = {
-                            scope.launch {
-                                Log.i("ex_mess", "Begin sign Out")
-                                googleAuthUiClient.signOut()
-                                youtubeViewModel.resetSignInUiState()
-                                Toast.makeText(
-                                    applicationContext,
-                                    "Signed out",
-                                    Toast.LENGTH_LONG
-                                ).show()
+                        Log.i("ex_mess", "End sign in")
+                    },
+                    onSignOut = {
+                        scope.launch {
+                            Log.i("ex_mess", "Begin sign Out")
+                            googleAuthUiClient.signOut()
+                            youtubeViewModel.resetSignInUiState()
+                            Toast.makeText(
+                                applicationContext,
+                                "Signed out",
+                                Toast.LENGTH_LONG
+                            ).show()
 
-                                navController.popBackStack()
-                                Log.i("ex_mess", "End sign out")
-                            }
+                            navController.popBackStack()
+                            Log.i("ex_mess", "End sign out")
                         }
-                    )
-                }
+                    }
+                )
             }
         }
     }
 }
 
-@SuppressLint("StateFlowValueCalledInComposition")
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun YoutubeTopAppBar(

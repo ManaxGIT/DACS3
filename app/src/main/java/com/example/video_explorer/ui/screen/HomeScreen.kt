@@ -1,18 +1,30 @@
 package com.example.video_explorer.ui.screen
 
+import com.example.video_explorer.R
 import android.util.Log
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
@@ -51,7 +63,7 @@ fun HomeScreen(
     when(homeScreenUiState) {
         is HomeScreenUiState.Loading -> {
             LoadingScreen(modifier = modifier.fillMaxSize())
-//            Log.i("ex_mess", "HomeScreen Is Loading")
+            Log.i("ex_mess", "HomeScreen Is Loading")
         }
         is HomeScreenUiState.Success -> {
 //            Log.i("ex_mess", "HomeScreen Is Success")
@@ -69,13 +81,57 @@ fun HomeScreen(
 }
 
 @Composable
+fun SearchBar(
+    query: String,
+    onQueryChange: (String) -> Unit,
+    modifier: Modifier = Modifier,
+    placeholder: String = "Search..."
+) {
+    Box(
+        modifier = modifier
+            .background(Color.LightGray, MaterialTheme.shapes.small)
+            .padding(horizontal = 16.dp, vertical = 8.dp)
+            .fillMaxWidth()
+    ) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            BasicTextField(
+                value = query,
+                onValueChange = onQueryChange,
+                singleLine = true,
+                textStyle = TextStyle(
+                    color = Color.Black,
+                    fontSize = 18.sp
+                ),
+                cursorBrush = SolidColor(Color.Black),
+                decorationBox = { innerTextField ->
+                    if (query.isEmpty()) {
+                        Text(
+                            text = placeholder,
+                            style = TextStyle(color = Color.LightGray, fontSize = 18.sp)
+                        )
+                    }
+                    innerTextField()
+                },
+                modifier = Modifier
+                    .weight(1f)
+                    .padding(end = 8.dp)
+            )
+        }
+    }
+}
+
+@Composable
 private fun HomeScreenList(
     homeScreenUiState: HomeScreenUiState,
     youtubeViewModel: YoutubeViewModel,
     navController: NavHostController,
     modifier: Modifier = Modifier
 ) {
-    LazyColumn(modifier = modifier.fillMaxSize()) {
+    LazyColumn(
+        modifier = modifier.fillMaxSize()
+    ) {
         items((homeScreenUiState as HomeScreenUiState.Success).videoList.items) { videoItem ->
             VideoItem(
                 video = videoItem,
@@ -91,7 +147,7 @@ private fun HomeScreenList(
 
 @Composable
 fun VideoItem(video: VideoItem, onClick: () -> Unit, modifier: Modifier= Modifier) {
-    val channel = video.channelItem!!
+    val channel = video.channelItem
     Column(
         modifier = modifier
             .fillMaxWidth()
@@ -112,14 +168,24 @@ fun VideoItem(video: VideoItem, onClick: () -> Unit, modifier: Modifier= Modifie
                 start = 8.dp, top = 8.dp
             )
         ) {
-            Image(
-                painter = rememberAsyncImagePainter(model = channel.snippet.thumbnails.default.url),
-                contentDescription = null,
-                modifier = Modifier
-                    .size(56.dp)
-                    .clip(CircleShape),
-                contentScale = ContentScale.Crop
-            )
+            if (channel != null)
+                Image(
+                    painter = rememberAsyncImagePainter(model = channel.snippet.thumbnails.default.url),
+                    contentDescription = null,
+                    modifier = Modifier
+                        .size(56.dp)
+                        .clip(CircleShape),
+                    contentScale = ContentScale.Crop
+                )
+            else
+                Image(
+                    painter = painterResource(id = R.drawable.thumb_down),
+                    contentDescription = null,
+                    modifier = Modifier
+                        .size(56.dp)
+                        .clip(CircleShape),
+                    contentScale = ContentScale.Crop
+                )
             Column(
                 modifier = Modifier.padding(start = 8.dp)
             ) {
@@ -127,7 +193,11 @@ fun VideoItem(video: VideoItem, onClick: () -> Unit, modifier: Modifier= Modifie
                     text = reduceStringLength(video.snippet.title, 70),
                     style = TextStyle(fontWeight = FontWeight.Bold, fontSize = 18.sp)
                 )
-                Text(text = "${channel.snippet.title} · ${calculateView(video.statistics.viewCount)} lượt xem · ${calculateTime(video.snippet.publishedAt)}")
+                if (channel != null) {
+                    Text(text = "${channel.snippet.title} · ${calculateView(video.statistics.viewCount)} lượt xem · ${calculateTime(video.snippet.publishedAt)}")
+                } else {
+                    Text(text = video.snippet.channelTitle)
+                }
             }
         }
     }
@@ -137,6 +207,17 @@ fun VideoItem(video: VideoItem, onClick: () -> Unit, modifier: Modifier= Modifie
 
 
 
+
+@Preview(showBackground = true)
+@Composable
+fun PreviewSearchBar() {
+    var query by remember { mutableStateOf("") }
+    SearchBar(
+        query = query,
+        onQueryChange = { query = it },
+        modifier = Modifier.padding(16.dp)
+    )
+}
 
 @Preview(showBackground = true)
 @Composable
@@ -214,6 +295,6 @@ fun videoItemPreview() {
         items = listOf(videoItem),
         pageInfo = pageInfo
     )
-    
+
     com.example.video_explorer.ui.screen.VideoItem(video = fakeVideo.items[0], onClick = { /*TODO*/ })
 }

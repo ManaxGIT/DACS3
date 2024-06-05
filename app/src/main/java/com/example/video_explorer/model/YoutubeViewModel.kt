@@ -6,6 +6,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import com.example.video_explorer.YoutubeVideoApplication
@@ -20,6 +21,7 @@ import com.example.video_explorer.data.youtubeData.YoutubeVideo
 import com.example.video_explorer.data.youtubeData.YoutubeVideoComment
 import kotlinx.coroutines.async
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import retrofit2.HttpException
 import java.io.IOException
@@ -36,11 +38,8 @@ class YoutubeViewModel(
         private set
 
     init {
-        runBlocking {
-            async {
-                getHomeVideoList()
-            }
-        }
+        getHomeVideoList()
+//        getHomeVideoListChannel()
     }
 
     fun onSignInResult(signInResult: SignInUiState?) {
@@ -89,30 +88,30 @@ class YoutubeViewModel(
         }
     }
 
-    suspend private fun getHomeVideoList() {
-        Log.i("ex_mess", "ViewModel getHomeVideoList Run Start")
-        try {
-            var videoList: YoutubeVideo = youtubeVideoRepository.getVideoDetails("NESs1KPmtKM,7pFAqHpLIHM,7lCDEYXw3mM,EoNOWVYKyo0,RyTb5genMmE,D7obfQ26V1M,-ljpcKRJdA8,C3GouGa0noM")
-//            delay(6000)
-            videoList.items.forEach{ video->
-                val youtubeChannel = getChannelDetails(video.snippet.channelId)
-                if (youtubeChannel != null) {
-                    video.channelItem = youtubeChannel.items[0]
+    private fun getHomeVideoList() {
+        viewModelScope.launch {
+            Log.i("ex_mess", "ViewModel getHomeVideoList Run Start")
+            try {
+                var videoList: YoutubeVideo = youtubeVideoRepository.getVideoDetails("MV8moKp1Wxw,NESs1KPmtKM,7pFAqHpLIHM,7lCDEYXw3mM,EoNOWVYKyo0,RyTb5genMmE,D7obfQ26V1M,-ljpcKRJdA8,C3GouGa0noM")
+                homeScreenUiState = HomeScreenUiState.Success(videoList = videoList, isChannelLoaded = false)
+                videoList.items.forEach{ video->
+                    val youtubeChannel = getChannelDetails(video.snippet.channelId)
+                    if (youtubeChannel != null) {
+                        video.channelItem = youtubeChannel.items[0]
+                    }
                 }
-            }
+                homeScreenUiState = HomeScreenUiState.Success(videoList = videoList, isChannelLoaded = true)
 
-            homeScreenUiState = HomeScreenUiState.Success(
-                videoList = videoList
-            )
-            Log.i("ex_mess", "ViewModel getHomeVideoList Run Success")
-        } catch (e: IOException) {
-            homeScreenUiState = HomeScreenUiState.Error("No Internet Connection")
-            Log.i("ex_mess getHomeVideoList", e.toString())
-        } catch (e: Exception) {
-            homeScreenUiState = HomeScreenUiState.Error()
-            Log.i("ex_mess4", e.toString())
+                Log.i("ex_mess", "ViewModel getHomeVideoList Run Success")
+            } catch (e: IOException) {
+                homeScreenUiState = HomeScreenUiState.Error("No Internet Connection")
+                Log.i("ex_mess getHomeVideoList", e.toString())
+            } catch (e: Exception) {
+                homeScreenUiState = HomeScreenUiState.Error()
+                Log.i("ex_mess4", e.toString())
+            }
+            Log.i("ex_mess", "ViewModel getHomeVideoList Run End")
         }
-        Log.i("ex_mess", "ViewModel getHomeVideoList Run End")
     }
 
     companion object {
