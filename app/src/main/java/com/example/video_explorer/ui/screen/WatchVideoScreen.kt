@@ -48,10 +48,11 @@ import coil.compose.rememberAsyncImagePainter
 import com.example.video_explorer.data.state.WatchVideoUiState
 import com.example.video_explorer.data.youtubeData.ChannelItem
 import com.example.video_explorer.data.youtubeData.CommentItem
+import com.example.video_explorer.data.youtubeData.SearchResponseId
 import com.example.video_explorer.data.youtubeData.parts.Localized
 import com.example.video_explorer.data.youtubeData.VideoItem
 import com.example.video_explorer.data.youtubeData.parts.PageInfo
-import com.example.video_explorer.data.youtubeData.parts.Snippet
+import com.example.video_explorer.data.youtubeData.parts.VideoSnippet
 import com.example.video_explorer.data.youtubeData.parts.VideoStatistics
 import com.example.video_explorer.data.youtubeData.parts.Thumbnails
 import com.example.video_explorer.data.youtubeData.YoutubeVideo
@@ -137,7 +138,7 @@ fun WatchVideo(
         modifier = modifier
     ) {
         YouTubeVideoPlayer(
-            videoId = video.id,
+            videoId = video.searchResponseId.id,
             lifecycleOwner = LocalLifecycleOwner.current
         )
         Column(
@@ -150,12 +151,12 @@ fun WatchVideo(
                     .clickable { openDescription() }
             ) {
                 Text(
-                    text = reduceStringLength(video.snippet.title, length = 81),
+                    text = reduceStringLength(video.videoSnippet.title, length = 81),
                     style = TextStyle(fontWeight = FontWeight.Bold, fontSize = 18.sp),
                     modifier = Modifier.padding(top = 8.dp)
                 )
                 Text(
-                    text = "${calculateView(video.statistics.viewCount)}  ${calculateTime(video.snippet.publishedAt)} ${getFirstTag(video)} ...xem thêm",
+                    text = "${calculateView(video.statistics!!.viewCount)}  ${calculateTime(video.videoSnippet.publishedAt)} ${getFirstTag(video)} ...xem thêm",
                     modifier = Modifier.padding(top = 4.dp, bottom = 4.dp)
                 )
             }
@@ -164,7 +165,7 @@ fun WatchVideo(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Image(
-                    painter = rememberAsyncImagePainter(model = video.channelItem!!.snippet.thumbnails.default.url),
+                    painter = rememberAsyncImagePainter(model = video.channel!!.snippet.thumbnails.default.url),
                     contentDescription = null,
                     modifier = Modifier
                         .size(46.dp)
@@ -173,11 +174,11 @@ fun WatchVideo(
                 )
                 Spacer(modifier = Modifier.width(8.dp))
                 Text(
-                    text = video.channelItem!!.snippet.title,
+                    text = video.channel!!.snippet.title,
                     style = TextStyle(fontWeight = FontWeight.Bold, fontSize = 14.sp)
                 )
                 Spacer(modifier = Modifier.width(12.dp))
-                Text(text = calculateSubscriber(video.channelItem!!.statistics.subscriberCount))
+                Text(text = calculateSubscriber(video.channel!!.statistics.subscriberCount))
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Absolute.Right) {
                     Button(
                         onClick = {},
@@ -196,14 +197,14 @@ fun WatchVideo(
             Row(
                 modifier = Modifier
             ) {
-                LikeDislikeIcon(iconId = R.drawable.thumb_up, onClick = {}, count = video.statistics.likeCount)
+                LikeDislikeIcon(iconId = R.drawable.thumb_up, onClick = {}, count = video.statistics!!.likeCount)
                 Spacer(modifier = Modifier.padding(8.dp))
                 LikeDislikeIcon(iconId = R.drawable.thumb_down, onClick = {})
             }
 
             CommentBox(
                 commentList = commentList,
-                commentCount = video.statistics.commentCount,
+                commentCount = video.statistics!!.commentCount,
                 onOpenClick = { openComment() }
             )
         }
@@ -319,6 +320,7 @@ private fun BottomSheetPart(
 
 @Composable
 fun DecriptionBottomSheet(video: VideoItem) {
+    video.statistics!!
     Column {
         Text(
             text = "Nội dung mô tả",
@@ -334,7 +336,7 @@ fun DecriptionBottomSheet(video: VideoItem) {
         ) {
             Spacer(modifier = Modifier.height(8.dp))
             Text(
-                text = video.snippet.title,
+                text = video.videoSnippet.title,
                 style = TextStyle(fontWeight = FontWeight.Bold, fontSize = 18.sp)
             )
             Row(
@@ -350,7 +352,7 @@ fun DecriptionBottomSheet(video: VideoItem) {
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
                     Text(
-                        text = calculateLike(video.statistics.likeCount),
+                        text = calculateLike(video.statistics!!.likeCount),
                         style = upperTextStyle
                     )
                     Text(text = "Lượt thích")
@@ -359,14 +361,14 @@ fun DecriptionBottomSheet(video: VideoItem) {
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
                     Text(
-                        text = video.statistics.viewCount,
+                        text = video.statistics!!.viewCount,
                         style = upperTextStyle
                     )
                     Text(text = "Lượt xem")
                 }
-                val date = video.snippet.publishedAt.substring(8,10)
-                val month = video.snippet.publishedAt.substring(5,7)
-                val year = video.snippet.publishedAt.substring(0,4)
+                val date = video.videoSnippet.publishedAt.substring(8,10)
+                val month = video.videoSnippet.publishedAt.substring(5,7)
+                val year = video.videoSnippet.publishedAt.substring(0,4)
                 Column(
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
@@ -380,7 +382,7 @@ fun DecriptionBottomSheet(video: VideoItem) {
             Card(
             ) {
                 Text(
-                    text = video.snippet.description,
+                    text = video.videoSnippet.description,
                     modifier = Modifier.padding(8.dp)
                 )
             }
@@ -449,17 +451,15 @@ val localized = Localized(
     description = "Antonio Fuentes speaks to us and takes questions on working with Google APIs and OAuth 2.0."
 )
 
-val snippet = Snippet(
+val snippet = VideoSnippet(
     publishedAt = "2012-06-20T23:12:38Z",
     channelId = "UC_x5XG1OV2P6uZZ5FSM9Ttw",
     title = "Google I/O 101: Q&A On Using Google APIs Quốc hội sẽ phê chuẩn miễn nhiệm bộ trưởng Bộ Công an đối với đại tướng Tô Lâm\n",
     description = "Antonio Fuentes speaks to us and takes questions on working with Google APIs and OAuth 2.0.",
     thumbnails = thumbnails,
     channelTitle = "Google for Developers",
-    tags = listOf("api", "gdl", "i-o"),
-    categoryId = "28",
     liveBroadcastContent = "none",
-    localized = localized
+    publishTime = ""
 )
 
 val statistics = VideoStatistics(
@@ -497,10 +497,10 @@ val mockChannel = ChannelItem(
 val videoItem = VideoItem(
     etag = "",
     kind = "",
-    id = "7lCDEYXw3mM",
-    snippet = snippet,
+    searchResponseId = SearchResponseId(kind = "", id = "7lCDEYXw3mM"),
+    videoSnippet = snippet,
     statistics = statistics,
-    channelItem = mockChannel
+    channel = mockChannel
 )
 
 val pageInfo = PageInfo(
@@ -558,7 +558,9 @@ val fakeVideo = YoutubeVideo(
     etag = "",
     kind = "",
     items = listOf(videoItem),
-    pageInfo = pageInfo
+    pageInfo = pageInfo,
+    regionCode = "",
+    nextPageToken = ""
 )
 
 

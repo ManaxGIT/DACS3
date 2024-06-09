@@ -14,6 +14,11 @@ class DefaultAppContainer : AppContainer {
 
     private val baseUrl = "https://www.googleapis.com/youtube/v3/"
 
+//    private val retrofit = Retrofit.Builder()
+//        .addConverterFactory(Json.asConverterFactory("application/json".toMediaType()))
+//        .baseUrl(baseUrl)
+//        .build()
+
     private val retrofit = Retrofit.Builder()
         .addConverterFactory(Json.asConverterFactory("application/json".toMediaType()))
         .baseUrl(baseUrl)

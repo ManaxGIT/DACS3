@@ -17,10 +17,9 @@ import com.example.video_explorer.data.state.SignInUiState
 import com.example.video_explorer.data.user.UserData
 import com.example.video_explorer.data.youtubeData.VideoItem
 import com.example.video_explorer.data.youtubeData.YoutubeChannel
-import com.example.video_explorer.data.youtubeData.YoutubeVideo
 import com.example.video_explorer.data.youtubeData.YoutubeVideoComment
-import kotlinx.coroutines.async
-import kotlinx.coroutines.delay
+import com.example.video_explorer.data.youtubeData.parts.VideoStatistics
+import com.example.video_explorer.data.youtubeData.parts.VideoStatisticsResponse
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import retrofit2.HttpException
@@ -38,6 +37,7 @@ class YoutubeViewModel(
         private set
 
     init {
+
         getHomeVideoList()
 //        getHomeVideoListChannel()
     }
@@ -57,26 +57,31 @@ class YoutubeViewModel(
 
     fun setWatchScreenUiStateToSuccess(videoItem: VideoItem) {
         this.watchVideoUiState = WatchVideoUiState.Success(youtubeVideoItem = videoItem)
-        runBlocking {
-            (watchVideoUiState as WatchVideoUiState.Success).setCommentList(getCommentList())
+        viewModelScope.launch {
+            val videoId = (watchVideoUiState as WatchVideoUiState.Success).youtubeVideoItem.searchResponseId.id
+            val commentList = youtubeVideoRepository.getVideoCommentList(videoId = videoId)
+            (watchVideoUiState as WatchVideoUiState.Success).setCommentList(commentList = commentList)
+
+//            val videoDetails = youtubeVideoRepository.getVideoDetails(videoId = videoId)
+//            (watchVideoUiState as WatchVideoUiState.Success).setDescription(videoDetails.items[0].)
             Log.i("ex_getComment", "getComment Run End")
         }
     }
 
-    suspend fun getCommentList(): YoutubeVideoComment? {
-        return try {
-            youtubeVideoRepository.getVideoCommentList((watchVideoUiState as WatchVideoUiState.Success).youtubeVideoItem.id)
-        } catch (e: ClassCastException) {
-            Log.i("ex_getComment", "getComment executed when watchScreenUiState is Error/Loading")
-            null
-        } catch (e: HttpException) {
-            Log.i("ex_getComment", "Comment function is turned off in this video")
-            null
-        } catch (e: Exception) {
-            Log.i("ex_getComment", e.toString())
-            null
-        }
-    }
+//    suspend fun getCommentList(videoId: String): YoutubeVideoComment? {
+//        return try {
+//            youtubeVideoRepository.getVideoCommentList((watchVideoUiState as WatchVideoUiState.Success).youtubeVideoItem.searchResponseId.id)
+//        } catch (e: ClassCastException) {
+//            Log.i("ex_getComment", "getComment executed when watchScreenUiState is Error/Loading")
+//            null
+//        } catch (e: HttpException) {
+//            Log.i("ex_getComment", "Comment function is turned off in this video")
+//            null
+//        } catch (e: Exception) {
+//            Log.i("ex_getComment", e.toString())
+//            null
+//        }
+//    }
 
     suspend fun getChannelDetails(channelId: String): YoutubeChannel? {
         try {
@@ -88,19 +93,42 @@ class YoutubeViewModel(
         }
     }
 
+    suspend fun getVideoStatistics(videoId: String): VideoStatisticsResponse? {
+        try {
+            return youtubeVideoRepository.getVideoStatistics(videoId = videoId)
+        } catch (e: Exception) {
+            Log.i("ex_mess getChannelDetails", e.toString())
+            return null
+        }
+    }
+
     private fun getHomeVideoList() {
         viewModelScope.launch {
             Log.i("ex_mess", "ViewModel getHomeVideoList Run Start")
             try {
-                var videoList: YoutubeVideo = youtubeVideoRepository.getVideoDetails("MV8moKp1Wxw,NESs1KPmtKM,7pFAqHpLIHM,7lCDEYXw3mM,EoNOWVYKyo0,RyTb5genMmE,D7obfQ26V1M,-ljpcKRJdA8,C3GouGa0noM")
-                homeScreenUiState = HomeScreenUiState.Success(videoList = videoList, isChannelLoaded = false)
-                videoList.items.forEach{ video->
-                    val youtubeChannel = getChannelDetails(video.snippet.channelId)
+
+                val searchResult = youtubeVideoRepository.getSearchVideo("")
+                var query = ""
+
+//                var videoList: YoutubeVideo = youtubeVideoRepository.getVideoDetails("MV8moKp1Wxw,NESs1KPmtKM,7pFAqHpLIHM,7lCDEYXw3mM,EoNOWVYKyo0,RyTb5genMmE,D7obfQ26V1M,-ljpcKRJdA8,C3GouGa0noM")
+                homeScreenUiState = HomeScreenUiState.Success(videoList = searchResult, isChannelLoaded = false, isStatisticsLoaded = false)
+                searchResult.items.forEach{ video->
+                    val youtubeChannel = getChannelDetails(video.videoSnippet.channelId)
                     if (youtubeChannel != null) {
-                        video.channelItem = youtubeChannel.items[0]
+                        video.channel = youtubeChannel.items[0]
                     }
                 }
-                homeScreenUiState = HomeScreenUiState.Success(videoList = videoList, isChannelLoaded = true)
+                homeScreenUiState = HomeScreenUiState.Success(videoList = searchResult, isChannelLoaded = true, isStatisticsLoaded = false)
+                searchResult.items.forEach{ video->
+                    val videoStatisticsResponse = getVideoStatistics(video.searchResponseId.id)
+                    if (videoStatisticsResponse != null) {
+                        video.statistics = videoStatisticsResponse.items[0].videoStatistics
+                    }
+                }
+                homeScreenUiState = HomeScreenUiState.Success(videoList = searchResult, isChannelLoaded = true, isStatisticsLoaded = true)
+
+
+
 
                 Log.i("ex_mess", "ViewModel getHomeVideoList Run Success")
             } catch (e: IOException) {
@@ -110,6 +138,7 @@ class YoutubeViewModel(
                 homeScreenUiState = HomeScreenUiState.Error()
                 Log.i("ex_mess4", e.toString())
             }
+            val a = ""
             Log.i("ex_mess", "ViewModel getHomeVideoList Run End")
         }
     }

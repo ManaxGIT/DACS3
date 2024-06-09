@@ -10,6 +10,9 @@ sealed interface WatchVideoUiState {
         fun setCommentList(commentList: YoutubeVideoComment?) {
             youtubeVideoComment = commentList
         }
+        fun setDescription(description: String) {
+            youtubeVideoItem.videoSnippet.description = description
+        }
     }
     object Error : WatchVideoUiState
     object Loading : WatchVideoUiState

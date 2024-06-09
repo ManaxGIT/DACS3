@@ -34,6 +34,7 @@ import androidx.navigation.NavHostController
 import coil.compose.rememberAsyncImagePainter
 import com.example.video_explorer.data.state.HomeScreenUiState
 import com.example.video_explorer.data.youtubeData.ChannelItem
+import com.example.video_explorer.data.youtubeData.SearchResponseId
 import com.example.video_explorer.data.youtubeData.VideoItem
 import com.example.video_explorer.data.youtubeData.YoutubeVideo
 import com.example.video_explorer.data.youtubeData.parts.ChannelSnippet
@@ -41,7 +42,7 @@ import com.example.video_explorer.data.youtubeData.parts.ChannelStatistics
 import com.example.video_explorer.data.youtubeData.parts.Default
 import com.example.video_explorer.data.youtubeData.parts.Localized
 import com.example.video_explorer.data.youtubeData.parts.PageInfo
-import com.example.video_explorer.data.youtubeData.parts.Snippet
+import com.example.video_explorer.data.youtubeData.parts.VideoSnippet
 import com.example.video_explorer.data.youtubeData.parts.Thumbnails
 import com.example.video_explorer.data.youtubeData.parts.TopicDetails
 import com.example.video_explorer.data.youtubeData.parts.VideoStatistics
@@ -147,7 +148,7 @@ private fun HomeScreenList(
 
 @Composable
 fun VideoItem(video: VideoItem, onClick: () -> Unit, modifier: Modifier= Modifier) {
-    val channel = video.channelItem
+    val channel = video.channel
     Column(
         modifier = modifier
             .fillMaxWidth()
@@ -156,7 +157,7 @@ fun VideoItem(video: VideoItem, onClick: () -> Unit, modifier: Modifier= Modifie
 
     ) {
         Image(
-            painter = rememberAsyncImagePainter(model = video.snippet.thumbnails.medium.url),
+            painter = rememberAsyncImagePainter(model = video.videoSnippet.thumbnails.medium.url),
             contentDescription = null,
             modifier = Modifier
                 .fillMaxWidth()
@@ -190,14 +191,13 @@ fun VideoItem(video: VideoItem, onClick: () -> Unit, modifier: Modifier= Modifie
                 modifier = Modifier.padding(start = 8.dp)
             ) {
                 Text(
-                    text = reduceStringLength(video.snippet.title, 70),
+                    text = reduceStringLength(video.videoSnippet.title, 70),
                     style = TextStyle(fontWeight = FontWeight.Bold, fontSize = 18.sp)
                 )
-                if (channel != null) {
-                    Text(text = "${channel.snippet.title} · ${calculateView(video.statistics.viewCount)} lượt xem · ${calculateTime(video.snippet.publishedAt)}")
-                } else {
-                    Text(text = video.snippet.channelTitle)
-                }
+                if(video.statistics != null)
+                    Text(text = "${video.videoSnippet.channelTitle} · ${calculateView(video.statistics!!.viewCount)} lượt xem · ${calculateTime(video.videoSnippet.publishedAt)}")
+                else
+                    Text(text = video.videoSnippet.channelTitle)
             }
         }
     }
@@ -229,17 +229,15 @@ fun videoItemPreview() {
         description = "Antonio Fuentes speaks to us and takes questions on working with Google APIs and OAuth 2.0."
     )
 
-    val snippet = Snippet(
+    val snippet = VideoSnippet(
         publishedAt = "2012-06-20T23:12:38Z",
         channelId = "UC_x5XG1OV2P6uZZ5FSM9Ttw",
         title = "Google I/O 101: Q&A On Using Google APIs Quốc hội sẽ phê chuẩn miễn nhiệm bộ trưởng Bộ Công an đối với đại tướng Tô Lâm\n",
         description = "Antonio Fuentes speaks to us and takes questions on working with Google APIs and OAuth 2.0.",
         thumbnails = thumbnails,
         channelTitle = "Google for Developers",
-        tags = listOf("api", "gdl", "i-o"),
-        categoryId = "28",
         liveBroadcastContent = "none",
-        localized = localized
+        publishTime = ""
     )
 
     val statistics = VideoStatistics(
@@ -277,10 +275,10 @@ fun videoItemPreview() {
     val videoItem = VideoItem(
         etag = "",
         kind = "",
-        id = "7lCDEYXw3mM",
-        snippet = snippet,
+        searchResponseId = SearchResponseId(kind = "", id = "MV8moKp1Wxw"),
+        videoSnippet = snippet,
         statistics = statistics,
-        channelItem = mockChannel
+        channel = mockChannel
     )
 
     val pageInfo = PageInfo(
@@ -293,7 +291,9 @@ fun videoItemPreview() {
         etag = "",
         kind = "",
         items = listOf(videoItem),
-        pageInfo = pageInfo
+        pageInfo = pageInfo,
+        regionCode = "",
+        nextPageToken = ""
     )
 
     com.example.video_explorer.ui.screen.VideoItem(video = fakeVideo.items[0], onClick = { /*TODO*/ })

@@ -1,7 +1,7 @@
 package com.example.video_explorer.data.youtubeData
 
 
-import com.example.video_explorer.data.youtubeData.parts.Snippet
+import com.example.video_explorer.data.youtubeData.parts.VideoSnippet
 import com.example.video_explorer.data.youtubeData.parts.VideoStatistics
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
@@ -13,11 +13,20 @@ data class VideoItem(
     @SerialName("kind")
     val kind: String,
     @SerialName("id")
-    val id: String,
+    val searchResponseId: SearchResponseId,
     @SerialName("snippet")
-    val snippet: Snippet,
+    val videoSnippet: VideoSnippet,
     @SerialName("statistics")
-    val statistics: VideoStatistics,
+    var statistics: VideoStatistics? = null,
     @SerialName("channel")
-    var channelItem: ChannelItem? = null
+    var channel: ChannelItem? = null,
+
+)
+
+@Serializable
+data class SearchResponseId(
+    @SerialName("kind")
+    val kind: String,
+    @SerialName("videoId")
+    val id: String
 )

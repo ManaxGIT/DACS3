@@ -4,7 +4,6 @@ import android.util.Log
 import com.example.video_explorer.data.youtubeData.CommentItem
 import com.example.video_explorer.data.youtubeData.VideoItem
 import com.example.video_explorer.data.youtubeData.YoutubeVideoComment
-import okio.utf8Size
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.TimeZone
@@ -76,7 +75,7 @@ fun numberOfDays(month: Int, year: Int): Int {
 }
 
 fun getFirstTag(video: VideoItem): String {
-    val tag = video.snippet.tags?.get(0)
+    val tag = video.videoSnippet.tags?.get(0)
     if (tag == null)
         return ""
     else
@@ -84,7 +83,7 @@ fun getFirstTag(video: VideoItem): String {
 }
 
 fun reduceStringLength(string: String, length: Int): String {
-    if (string.utf8Size() > length)
+    if (string.length > length)
         return "${string.substring(0,length)}..."
     else
         return string

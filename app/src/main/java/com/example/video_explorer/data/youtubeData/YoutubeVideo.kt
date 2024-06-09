@@ -13,8 +13,10 @@ data class YoutubeVideo(
     val kind: String,
     @SerialName("items")
     val items: List<VideoItem>,
+    @SerialName("nextPageToken")
+    val nextPageToken: String,
+    @SerialName("regionCode")
+    val regionCode: String,
     @SerialName("pageInfo")
     val pageInfo: PageInfo
-
-
 )
