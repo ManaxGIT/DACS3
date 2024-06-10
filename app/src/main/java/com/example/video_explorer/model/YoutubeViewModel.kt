@@ -17,12 +17,8 @@ import com.example.video_explorer.data.state.SignInUiState
 import com.example.video_explorer.data.user.UserData
 import com.example.video_explorer.data.youtubeData.VideoItem
 import com.example.video_explorer.data.youtubeData.YoutubeChannel
-import com.example.video_explorer.data.youtubeData.YoutubeVideoComment
-import com.example.video_explorer.data.youtubeData.parts.VideoStatistics
 import com.example.video_explorer.data.youtubeData.parts.VideoStatisticsResponse
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
-import retrofit2.HttpException
 import java.io.IOException
 import kotlin.ClassCastException
 
@@ -58,13 +54,22 @@ class YoutubeViewModel(
     fun setWatchScreenUiStateToSuccess(videoItem: VideoItem) {
         this.watchVideoUiState = WatchVideoUiState.Success(youtubeVideoItem = videoItem)
         viewModelScope.launch {
-            val videoId = (watchVideoUiState as WatchVideoUiState.Success).youtubeVideoItem.searchResponseId.id
-            val commentList = youtubeVideoRepository.getVideoCommentList(videoId = videoId)
-            (watchVideoUiState as WatchVideoUiState.Success).setCommentList(commentList = commentList)
+            try {
+                val currentSuccessWatchVideoUiState =
+                    (watchVideoUiState as WatchVideoUiState.Success)
+                val videoId = currentSuccessWatchVideoUiState.youtubeVideoItem.searchResponseId.id
+                val commentList = youtubeVideoRepository.getVideoCommentList(videoId = videoId)
+                currentSuccessWatchVideoUiState.setCommentList(commentList = commentList)
 
-//            val videoDetails = youtubeVideoRepository.getVideoDetails(videoId = videoId)
-//            (watchVideoUiState as WatchVideoUiState.Success).setDescription(videoDetails.items[0].)
-            Log.i("ex_getComment", "getComment Run End")
+                val videoDetails = youtubeVideoRepository.getAdditionalDetails(videoId = videoId)
+                currentSuccessWatchVideoUiState.setDescription(videoDetails.items[0].snippet.description)
+                if(videoDetails.items[0].snippet.tags != null) {
+                    currentSuccessWatchVideoUiState.setTags(videoDetails.items[0].snippet.tags!!)
+                }
+            } catch (e: Exception) {
+//                watchVideoUiState = WatchVideoUiState.Error(errorNote = e.toString())
+                Log.i("ex_loadDescription", e.toString())
+            }
         }
     }
 
@@ -102,14 +107,13 @@ class YoutubeViewModel(
         }
     }
 
-    private fun getHomeVideoList() {
+    fun getHomeVideoList(searchString: String = "") {
         viewModelScope.launch {
             Log.i("ex_mess", "ViewModel getHomeVideoList Run Start")
             try {
+                homeScreenUiState = HomeScreenUiState.Loading
 
-                val searchResult = youtubeVideoRepository.getSearchVideo("")
-                var query = ""
-
+                val searchResult = youtubeVideoRepository.getSearchVideo(searchString)
 //                var videoList: YoutubeVideo = youtubeVideoRepository.getVideoDetails("MV8moKp1Wxw,NESs1KPmtKM,7pFAqHpLIHM,7lCDEYXw3mM,EoNOWVYKyo0,RyTb5genMmE,D7obfQ26V1M,-ljpcKRJdA8,C3GouGa0noM")
                 homeScreenUiState = HomeScreenUiState.Success(videoList = searchResult, isChannelLoaded = false, isStatisticsLoaded = false)
                 searchResult.items.forEach{ video->

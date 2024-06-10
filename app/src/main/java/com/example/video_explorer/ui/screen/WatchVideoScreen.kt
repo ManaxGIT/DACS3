@@ -4,6 +4,7 @@ import android.util.Log
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import com.example.video_explorer.R
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -37,6 +38,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
@@ -93,6 +97,11 @@ fun WatchVideoScreen(
             val scope = rememberCoroutineScope()
             var sheetContent: Sheet by remember { mutableStateOf(Sheet.Description) }
 
+            val configuration = LocalConfiguration.current
+            val screenHeight = configuration.screenHeightDp.dp
+            val localDensity = LocalDensity.current
+            var videoHeightDp by remember { mutableStateOf(500.dp) }
+
             BottomSheetScaffold(
                 scaffoldState = scaffoldState,
                 sheetContent =  {
@@ -100,10 +109,11 @@ fun WatchVideoScreen(
                         bottomSheetContent = sheetContent,
                         video = watchVideoUiState.youtubeVideoItem,
                         commentList = watchVideoUiState.youtubeVideoComment,
-                        modifier = Modifier.height(489.dp)
+                        modifier = Modifier.height(screenHeight - videoHeightDp - 24.dp)
                     )
                 },
                 sheetPeekHeight = 0.dp,
+                sheetDragHandle = { NewDragHandle() }
             ) {
                 WatchVideo(
                     video = watchVideoUiState.youtubeVideoItem,
@@ -116,12 +126,16 @@ fun WatchVideoScreen(
                     openComment = { scope.launch {
                         sheetContent = Sheet.Comment
                         scaffoldState.bottomSheetState.expand()
-                    }}
+                    }},
+                    getHeightModifier = Modifier
+                        .onGloballyPositioned { coordinates ->
+                            videoHeightDp = with(localDensity) { coordinates.size.height.toDp() }
+                        }
                 )
             }
 
         }
-        is WatchVideoUiState.Error -> ErrorScreen(errorNote = "Watch Video Screen Is Error")
+        is WatchVideoUiState.Error -> ErrorScreen(errorNote = watchVideoUiState.errorNote)
     }
 }
 
@@ -132,6 +146,7 @@ fun WatchVideo(
     modifier: Modifier = Modifier,
     openDescription: () -> Unit,
     openComment: () -> Unit,
+    getHeightModifier: Modifier
 
 ) {
     Column(
@@ -139,7 +154,8 @@ fun WatchVideo(
     ) {
         YouTubeVideoPlayer(
             videoId = video.searchResponseId.id,
-            lifecycleOwner = LocalLifecycleOwner.current
+            lifecycleOwner = LocalLifecycleOwner.current,
+            modifier = getHeightModifier
         )
         Column(
             modifier = modifier.padding(start = 8.dp)
@@ -151,7 +167,7 @@ fun WatchVideo(
                     .clickable { openDescription() }
             ) {
                 Text(
-                    text = reduceStringLength(video.videoSnippet.title, length = 81),
+                    text = reduceStringLength(video.videoSnippet.title, length = 85),
                     style = TextStyle(fontWeight = FontWeight.Bold, fontSize = 18.sp),
                     modifier = Modifier.padding(top = 8.dp)
                 )
@@ -320,7 +336,6 @@ private fun BottomSheetPart(
 
 @Composable
 fun DecriptionBottomSheet(video: VideoItem) {
-    video.statistics!!
     Column {
         Text(
             text = "Nội dung mô tả",
@@ -426,10 +441,24 @@ fun CommentBottomSheet(commentList: YoutubeVideoComment?) {
                 }
             }
         }
-
     }
 }
 
+@Composable
+private fun NewDragHandle() {
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(24.dp),
+        contentAlignment = Alignment.Center
+    ) {
+        Card(
+            modifier = Modifier
+                .width(50.dp)
+                .height(5.dp),
+        ){}
+    }
+}
 
 
 
@@ -580,5 +609,5 @@ private fun WatchVideoScreenDescriptionPreview() {
 @Composable
 private fun WatchVideoScreenPreview() {
 
-    WatchVideo(video = fakeVideo.items[0], commentList = mockResponse, modifier = Modifier, { }, { })
+    WatchVideo(video = fakeVideo.items[0], commentList = mockResponse, modifier = Modifier, { }, { }, Modifier)
 }

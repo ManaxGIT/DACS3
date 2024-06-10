@@ -13,7 +13,10 @@ sealed interface WatchVideoUiState {
         fun setDescription(description: String) {
             youtubeVideoItem.videoSnippet.description = description
         }
+        fun setTags(tags: List<String>) {
+            youtubeVideoItem.videoSnippet.tags = tags
+        }
     }
-    object Error : WatchVideoUiState
     object Loading : WatchVideoUiState
+    data class Error(val errorNote: String) : WatchVideoUiState
 }

@@ -59,7 +59,6 @@ fun VideoExplorerApp(
     Log.i("ex_mess", "Video Explorer App Run")
     val navController: NavHostController = rememberNavController()
     val youtubeViewModel: YoutubeViewModel = viewModel(factory = YoutubeViewModel.Factory)
-    val scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior()
     val scope = rememberCoroutineScope()
     val googleAuthUiClient by lazy {
         GoogleAuthUiClient(
@@ -77,25 +76,10 @@ fun VideoExplorerApp(
             modifier = Modifier
         ) {
             composable(route = Screen.HomeScreen.name) {
-                Scaffold(
-                    modifier = Modifier
-                        .nestedScroll(scrollBehavior.nestedScrollConnection),
-                    topBar = {
-                        YoutubeTopAppBar(
-                            scrollBehavior = scrollBehavior,
-                            onProfileClick = {
-                                if(navController.currentDestination?.route != Screen.ProfileScreen.name)
-                                    navController.navigate(Screen.ProfileScreen.name)
-                            }
-                        )
-                    }
-                ) { innerPadding ->
-                    HomeScreen(
-                        youtubeViewModel = youtubeViewModel,
-                        navController = navController,
-                        modifier = Modifier.padding(innerPadding)
-                    )
-                }
+                HomeScreen(
+                    youtubeViewModel = youtubeViewModel,
+                    navController = navController
+                )
             }
             composable(route = Screen.WatchVideo.name) {
                 WatchVideoScreen(watchVideoUiState = youtubeViewModel.watchVideoUiState)
@@ -159,28 +143,6 @@ fun VideoExplorerApp(
             }
         }
     }
-}
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-fun YoutubeTopAppBar(
-    scrollBehavior: TopAppBarScrollBehavior,
-    modifier: Modifier = Modifier,
-    onProfileClick: () -> Unit
-) {
-    CenterAlignedTopAppBar(
-        scrollBehavior = scrollBehavior,
-        title = {
-            Row {
-                Text(
-                    text = "Chau Van Man",
-                    style = MaterialTheme.typography.headlineSmall,
-                )
-            }
-        },
-        modifier = modifier
-            .clickable(onClick = onProfileClick)
-    )
 }
 
 

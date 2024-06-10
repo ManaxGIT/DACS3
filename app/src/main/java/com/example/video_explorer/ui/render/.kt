@@ -75,11 +75,11 @@ fun numberOfDays(month: Int, year: Int): Int {
 }
 
 fun getFirstTag(video: VideoItem): String {
-    val tag = video.videoSnippet.tags?.get(0)
-    if (tag == null)
+    val tags = video.videoSnippet.tags?.get(0)
+    if (tags == null)
         return ""
     else
-        return "#$tag"
+        return "#$tags"
 }
 
 fun reduceStringLength(string: String, length: Int): String {
