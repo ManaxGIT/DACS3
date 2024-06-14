@@ -7,6 +7,7 @@ import retrofit2.http.Query
 import com.example.video_explorer.data.youtubeData.YoutubeChannel
 import com.example.video_explorer.data.youtubeData.YoutubeVideoComment
 import com.example.video_explorer.data.youtubeData.parts.VideoStatisticsResponse
+import retrofit2.http.POST
 
 
 interface YoutubeApiService {
@@ -47,4 +48,11 @@ interface YoutubeApiService {
         @Query("key") apiKey: String = "AIzaSyDhnqxvf2uI6GOAkn7A-CEWcyErH2YSdfI",
         @Query("part") part: String = "snippet"
     ): VideoAddtitionalDetails
+
+    @POST("rate")
+    suspend fun rateVideo(
+        @Query("id") videoId: String,
+        @Query("rating") rating: String
+    )
+
 }

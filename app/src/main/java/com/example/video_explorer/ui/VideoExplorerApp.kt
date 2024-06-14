@@ -31,6 +31,8 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.data.SourceContext
 import androidx.navigation.NavHostController
 import com.example.video_explorer.data.state.WatchVideoUiState
+import com.example.video_explorer.data.user.UserData
+import com.example.video_explorer.model.AuthResult
 import com.example.video_explorer.model.GoogleAuthUiClient
 import com.example.video_explorer.model.SignInViewModel
 import com.example.video_explorer.model.YoutubeViewModel
@@ -39,6 +41,7 @@ import com.example.video_explorer.ui.screen.WatchVideoScreen
 import com.example.video_explorer.ui.screen.user.LoginScreen
 import com.example.video_explorer.ui.screen.user.ProfileScreen
 import com.google.android.gms.auth.api.identity.Identity
+import com.google.android.gms.common.api.ApiException
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 
@@ -67,6 +70,25 @@ fun VideoExplorerApp(
         )
     }
 
+    val signInRequestCode = 1
+    val authResultLauncher = rememberLauncherForActivityResult(contract = AuthResult()) { task ->
+        try {
+            val account = task?.getResult(ApiException::class.java)
+            if (account == null) {
+                Log.i("ex_auth", "account null")
+
+                youtubeViewModel.resetSignInUiState()
+            } else {
+                scope.launch {
+                    youtubeViewModel.setSignInUiState(UserData(account.id!!, account.displayName, account.photoUrl.toString()))
+                }
+            }
+        } catch (e: ApiException) {
+            Log.i("ex_auth", e.toString())
+            youtubeViewModel.resetSignInUiState()
+        }
+    }
+
     Surface(
         modifier = Modifier.fillMaxSize()
     ) {
@@ -76,18 +98,6 @@ fun VideoExplorerApp(
             modifier = Modifier
         ) {
             composable(route = Screen.HomeScreen.name) {
-                HomeScreen(
-                    youtubeViewModel = youtubeViewModel,
-                    navController = navController
-                )
-            }
-            composable(route = Screen.WatchVideo.name) {
-                WatchVideoScreen(watchVideoUiState = youtubeViewModel.watchVideoUiState)
-            }
-            composable(route = Screen.LoginScreen.name) {
-                LoginScreen(loginViewModel = SignInViewModel())
-            }
-            composable(route = Screen.ProfileScreen.name) {
                 LaunchedEffect(key1 = Unit) {
                     val currentSignedInUser = googleAuthUiClient.getSignedInUser()
                     if(currentSignedInUser != null) {
@@ -97,6 +107,22 @@ fun VideoExplorerApp(
 //                            navController.navigate(route = Screen.ProfileScreen.name)
                     }
                 }
+                HomeScreen(
+                    youtubeViewModel = youtubeViewModel,
+                    navController = navController
+                )
+            }
+            composable(route = Screen.WatchVideo.name) {
+                WatchVideoScreen(
+                    watchVideoUiState = youtubeViewModel.watchVideoUiState,
+                    youtubeViewModel = youtubeViewModel
+                )
+            }
+            composable(route = Screen.LoginScreen.name) {
+                LoginScreen(loginViewModel = SignInViewModel())
+            }
+            composable(route = Screen.ProfileScreen.name) {
+
                 val launcher = rememberLauncherForActivityResult(
                     contract = ActivityResultContracts.StartIntentSenderForResult(),
                     onResult = { result ->
@@ -111,6 +137,7 @@ fun VideoExplorerApp(
                     }
                 )
                 ProfileScreen(
+                    youtubeViewModel = youtubeViewModel,
                     signInUiState = youtubeViewModel.signInUiState,
                     onSignIn = {
                         Log.i("ex_mess", "Begin sign in")
@@ -121,6 +148,8 @@ fun VideoExplorerApp(
                                     signInIntentSender ?: return@launch
                                 ).build()
                             )
+//                            authResultLauncher.launch(signInRequestCode)
+
                         }
                         Log.i("ex_mess", "End sign in")
                     },

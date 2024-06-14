@@ -13,7 +13,8 @@ interface YoutubeVideoRepository {
     suspend fun getVideoStatistics(videoId: String): VideoStatisticsResponse
     suspend fun getChannelDetails(channelId: String): YoutubeChannel
     suspend fun getVideoCommentList(videoId: String): YoutubeVideoComment
-    suspend fun getSearchVideo(query: String): YoutubeVideo
+    suspend fun getSearchVideo(query: String, maxResult: Int): YoutubeVideo
+    suspend fun rateVideo(videoId: String, rating: String)
 }
 
 class NetworkYoutubeVideoRepository(
@@ -35,7 +36,11 @@ class NetworkYoutubeVideoRepository(
         return youtubeApiService.getVideoCommentList(videoId = videoId)
     }
 
-    override suspend fun getSearchVideo(query: String): YoutubeVideo {
-        return youtubeApiService.getSearchVideo(query = query, apiKey = "AIzaSyDkNTLceNFPSBUcUgFHSOVy5_CnfmUxzyQ")
+    override suspend fun getSearchVideo(query: String, maxResult: Int): YoutubeVideo {
+        return youtubeApiService.getSearchVideo(query = query, apiKey = "AIzaSyDkNTLceNFPSBUcUgFHSOVy5_CnfmUxzyQ", maxResults = maxResult.toString())
+    }
+
+    override suspend fun rateVideo(videoId: String, rating: String) {
+        return youtubeApiService.rateVideo(videoId = videoId, rating = rating)
     }
 }

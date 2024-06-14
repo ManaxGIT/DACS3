@@ -13,6 +13,7 @@ import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -48,9 +49,11 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
+import coil.compose.AsyncImage
 import coil.compose.rememberAsyncImagePainter
 import com.example.video_explorer.data.YoutubeVideoRepository
 import com.example.video_explorer.data.state.HomeScreenUiState
+import com.example.video_explorer.data.state.SignInUiState
 import com.example.video_explorer.data.youtubeData.ChannelItem
 import com.example.video_explorer.data.youtubeData.SearchResponseId
 import com.example.video_explorer.data.youtubeData.VideoItem
@@ -91,10 +94,14 @@ fun HomeScreen(
                     .nestedScroll(scrollBehavior.nestedScrollConnection),
                 topBar = {
                     YoutubeTopAppBar(
+                        signInUiState = youtubeViewModel.signInUiState,
                         scrollBehavior = scrollBehavior,
                         searchHandler = {searchString ->
                             youtubeViewModel.getHomeVideoList(searchString = searchString)
                         },
+                        onProfileClick = {
+                            navController.navigate(route = Screen.ProfileScreen.name)
+                        }
 
                     )
                 }
@@ -117,12 +124,14 @@ fun HomeScreen(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun YoutubeTopAppBar(
+    signInUiState: SignInUiState,
     scrollBehavior: TopAppBarScrollBehavior,
     searchHandler: (String) -> Unit,
+    onProfileClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     var searchString by remember { mutableStateOf("") }
-    var isSearching by remember { mutableStateOf(true) }
+    var isSearching by remember { mutableStateOf(false) }
     var isFocused by remember { mutableStateOf(false) }
     val focusRequester = remember { FocusRequester() }
 
@@ -158,10 +167,55 @@ fun YoutubeTopAppBar(
                                     isSearching = true
                                 }
                         )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        val profilePicModifier = Modifier
+                            .size(36.dp)
+                            .clip(CircleShape)
+                            .clickable { onProfileClick() }
+                        when(signInUiState) {
+                            is SignInUiState.SignedIn -> {
+                                if(signInUiState.user != null) {
+                                    AsyncImage(
+                                        model = signInUiState.user.profilePictureUrl,
+                                        contentDescription = "Profile picture",
+                                        modifier = profilePicModifier,
+                                        contentScale = ContentScale.Crop
+                                    )
+                                } else {
+                                    Image(
+                                        painter = painterResource(id = R.drawable.profile),
+                                        contentDescription = "Profile picture",
+                                        modifier = profilePicModifier,
+                                        contentScale = ContentScale.Crop
+                                    )
+                                }
+                            }
+                            is SignInUiState.NotSignedIn -> {
+                                Image(
+                                    painter = painterResource(id = R.drawable.profile),
+                                    contentDescription = "Profile picture",
+                                    modifier = profilePicModifier,
+                                    contentScale = ContentScale.Crop
+                                )
+                            }
+
+                        }
+
                     }
                 }
             } else {
-                Column {
+                Row {
+                    Icon(
+                        imageVector = Icons.Filled.ArrowBack,
+                        contentDescription = "Search Icon",
+                        tint = Color.Black,
+                        modifier = Modifier
+                            .padding(end = 8.dp)
+                            .size(36.dp)
+                            .clickable {
+                                isSearching = false
+                            }
+                    )
                     SearchBar(
                         query = searchString,
                         onQueryChange = { searchString = it },
@@ -170,10 +224,10 @@ fun YoutubeTopAppBar(
                         },
                         focusRequester = focusRequester,
                         searchClick = {
+                            isFocused = false
                             searchHandler(searchString)
                         }
                     )
-                    Text(text = isFocused.toString())
                 }
             }
         }
@@ -329,7 +383,7 @@ fun VideoItem(video: VideoItem, onClick: () -> Unit, modifier: Modifier= Modifie
 @Composable
 fun PreviewSearchBar() {
 
-    YoutubeTopAppBar(scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior(), {})
+    YoutubeTopAppBar(signInUiState = SignInUiState.NotSignedIn(), scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior(), {}, onProfileClick = {})
 //    SearchBar(
 //        query = query,
 //        onQueryChange = { query = it },

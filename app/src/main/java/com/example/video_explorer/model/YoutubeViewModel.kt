@@ -34,8 +34,9 @@ class YoutubeViewModel(
 
     init {
 
-        getHomeVideoList()
+        getHomeVideoList(searchString = "lap trinh", maxResult = 6)
 //        getHomeVideoListChannel()
+//        ratingVideo(videoId = "YQHsXMglC9A", rating="like")
     }
 
     fun onSignInResult(signInResult: SignInUiState?) {
@@ -93,7 +94,7 @@ class YoutubeViewModel(
             Log.i("ex_mess", "ViewModel getChannelDetails Id = ${channelId}")
             return youtubeVideoRepository.getChannelDetails(channelId = channelId)
         } catch (e: Exception) {
-            Log.i("ex_mess getChannelDetails", e.toString())
+            Log.i("ex_channel", e.toString())
             return null
         }
     }
@@ -102,18 +103,18 @@ class YoutubeViewModel(
         try {
             return youtubeVideoRepository.getVideoStatistics(videoId = videoId)
         } catch (e: Exception) {
-            Log.i("ex_mess getChannelDetails", e.toString())
+            Log.i("ex_statistics", e.toString())
             return null
         }
     }
 
-    fun getHomeVideoList(searchString: String = "") {
+    fun getHomeVideoList(searchString: String = "", maxResult: Int = 20) {
         viewModelScope.launch {
             Log.i("ex_mess", "ViewModel getHomeVideoList Run Start")
             try {
                 homeScreenUiState = HomeScreenUiState.Loading
 
-                val searchResult = youtubeVideoRepository.getSearchVideo(searchString)
+                val searchResult = youtubeVideoRepository.getSearchVideo(searchString, maxResult = maxResult)
 //                var videoList: YoutubeVideo = youtubeVideoRepository.getVideoDetails("MV8moKp1Wxw,NESs1KPmtKM,7pFAqHpLIHM,7lCDEYXw3mM,EoNOWVYKyo0,RyTb5genMmE,D7obfQ26V1M,-ljpcKRJdA8,C3GouGa0noM")
                 homeScreenUiState = HomeScreenUiState.Success(videoList = searchResult, isChannelLoaded = false, isStatisticsLoaded = false)
                 searchResult.items.forEach{ video->
@@ -142,8 +143,18 @@ class YoutubeViewModel(
                 homeScreenUiState = HomeScreenUiState.Error()
                 Log.i("ex_mess4", e.toString())
             }
-            val a = ""
             Log.i("ex_mess", "ViewModel getHomeVideoList Run End")
+        }
+    }
+
+    fun ratingVideo(videoId: String, rating: String) {
+        viewModelScope.launch {
+            try {
+                Log.i("ex_rating", "videoId: $videoId")
+                youtubeVideoRepository.rateVideo(videoId = videoId, rating = rating)
+            } catch (e: Exception) {
+                Log.i("ex_rating", e.stackTraceToString())
+            }
         }
     }
 

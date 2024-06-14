@@ -1,11 +1,17 @@
 package com.example.video_explorer.ui.render
 
+import android.content.Context
 import android.util.Log
 import com.example.video_explorer.data.youtubeData.CommentItem
 import com.example.video_explorer.data.youtubeData.VideoItem
 import com.example.video_explorer.data.youtubeData.YoutubeVideoComment
+import com.google.android.gms.auth.api.signin.GoogleSignIn
+import com.google.android.gms.auth.api.signin.GoogleSignInClient
+import com.google.android.gms.auth.api.signin.GoogleSignInOptions
+import java.text.NumberFormat
 import java.text.SimpleDateFormat
 import java.util.Date
+import java.util.Locale
 import java.util.TimeZone
 
 fun calculateView(view: String): String {
@@ -94,3 +100,29 @@ fun getRandomComment(commentList: YoutubeVideoComment): CommentItem {
     Log.i("ex_getRandomComment", "${commentList.items.size} $randomNumber")
     return commentList.items[randomNumber]
 }
+
+fun formatNumber(number: String): String {
+    val formatter = NumberFormat.getNumberInstance(Locale.GERMANY)
+    return formatter.format(number.toLong())
+}
+
+fun getGoogleSignInClient(context: Context): GoogleSignInClient {
+    val gso = GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
+        .requestEmail()
+        .build()
+
+    return GoogleSignIn.getClient(context, gso)
+}
+
+
+
+
+
+
+
+
+
+
+
+
+

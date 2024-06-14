@@ -36,7 +36,7 @@ data class VideoStatistics(
     @SerialName("favoriteCount")
     val favoriteCount: String,
     @SerialName("likeCount")
-    val likeCount: String,
+    val likeCount: String = "1",
     @SerialName("viewCount")
     val viewCount: String
 )

@@ -70,6 +70,7 @@ class GoogleAuthUiClient(
     }
 
     fun getSignedInUser(): UserData? = auth.currentUser?.run {
+        Log.i("ex_user", uid)
         UserData(
             userId = uid,
             username = displayName,

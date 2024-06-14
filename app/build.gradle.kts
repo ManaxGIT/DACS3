@@ -75,7 +75,7 @@ dependencies {
     implementation( "com.pierfrancescosoffritti.androidyoutubeplayer:chromecast-sender:0.28")
     implementation("com.google.firebase:firebase-database:21.0.0")
     implementation("com.google.firebase:firebase-auth-ktx:23.0.0")
-    implementation ("com.google.android.gms:play-services-auth:21.1.1")
+    implementation ("com.google.android.gms:play-services-auth:21.2.0")
 
     androidTestImplementation(platform("androidx.compose:compose-bom:2023.08.00"))
     androidTestImplementation("androidx.compose.ui:ui-test-junit4")

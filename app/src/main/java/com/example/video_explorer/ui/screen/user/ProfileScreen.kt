@@ -25,9 +25,11 @@ import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
 import com.example.video_explorer.data.state.SignInUiState
 import com.example.video_explorer.data.user.UserData
+import com.example.video_explorer.model.YoutubeViewModel
 
 @Composable
 fun ProfileScreen(
+    youtubeViewModel: YoutubeViewModel,
     signInUiState: SignInUiState,
     onSignIn: () -> Unit,
     onSignOut: () -> Unit
@@ -41,7 +43,6 @@ fun ProfileScreen(
             is SignInUiState.NotSignedIn -> SignInSection(onSignIn = onSignIn)
         }
     }
-
 }
 
 @Composable

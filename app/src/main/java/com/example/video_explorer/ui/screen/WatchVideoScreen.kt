@@ -69,11 +69,13 @@ import com.example.video_explorer.data.youtubeData.parts.Default
 import com.example.video_explorer.data.youtubeData.parts.TopLevelComment
 import com.example.video_explorer.data.youtubeData.parts.TopLevelCommentSnippet
 import com.example.video_explorer.data.youtubeData.parts.TopicDetails
+import com.example.video_explorer.model.YoutubeViewModel
 import com.example.video_explorer.ui.YouTubeVideoPlayer
 import com.example.video_explorer.ui.render.calculateLike
 import com.example.video_explorer.ui.render.calculateSubscriber
 import com.example.video_explorer.ui.render.calculateTime
 import com.example.video_explorer.ui.render.calculateView
+import com.example.video_explorer.ui.render.formatNumber
 import com.example.video_explorer.ui.render.getFirstTag
 import com.example.video_explorer.ui.render.getRandomComment
 import com.example.video_explorer.ui.render.reduceStringLength
@@ -87,7 +89,8 @@ private sealed interface Sheet {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun WatchVideoScreen(
-    watchVideoUiState: WatchVideoUiState
+    watchVideoUiState: WatchVideoUiState,
+    youtubeViewModel: YoutubeViewModel
 ) {
     Log.i("ex_", "WatchVideoScreen Run Start")
     when(watchVideoUiState) {
@@ -130,7 +133,10 @@ fun WatchVideoScreen(
                     getHeightModifier = Modifier
                         .onGloballyPositioned { coordinates ->
                             videoHeightDp = with(localDensity) { coordinates.size.height.toDp() }
-                        }
+                        },
+                    ratingHandler = { videoId, rating ->
+                        youtubeViewModel.ratingVideo(videoId = videoId, rating = rating)
+                    }
                 )
             }
 
@@ -146,6 +152,7 @@ fun WatchVideo(
     modifier: Modifier = Modifier,
     openDescription: () -> Unit,
     openComment: () -> Unit,
+    ratingHandler: (videoId: String, rating: String) -> Unit,
     getHeightModifier: Modifier
 
 ) {
@@ -213,9 +220,19 @@ fun WatchVideo(
             Row(
                 modifier = Modifier
             ) {
-                LikeDislikeIcon(iconId = R.drawable.thumb_up, onClick = {}, count = video.statistics!!.likeCount)
+                LikeDislikeIcon(
+                    iconId = R.drawable.thumb_up,
+                    onIconClick = {
+                        ratingHandler(video.searchResponseId.id, "like")
+                    },
+                    count = video.statistics!!.likeCount)
                 Spacer(modifier = Modifier.padding(8.dp))
-                LikeDislikeIcon(iconId = R.drawable.thumb_down, onClick = {})
+                LikeDislikeIcon(
+                    iconId = R.drawable.thumb_down,
+                    onIconClick = {
+                        ratingHandler(video.searchResponseId.id, "dislike")
+                    }
+                )
             }
 
             CommentBox(
@@ -225,6 +242,33 @@ fun WatchVideo(
             )
         }
 
+    }
+}
+
+@Composable
+fun LikeDislikeIcon(
+    iconId: Int,
+    count: String? = null,
+    onIconClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Row(
+        modifier = modifier.padding(start = 8.dp, top = 8.dp)
+    ) {
+        Icon(
+            painter = painterResource(id = iconId),
+            contentDescription = null,
+            tint = Color.Gray,
+            modifier = Modifier
+                .size(24.dp)
+                .clickable { onIconClick() }
+        )
+        Spacer(modifier = Modifier.padding(2.dp))
+        if (count != null)
+            Text(
+                text = calculateLike(count),
+                color = Color.Gray
+            )
     }
 }
 
@@ -285,30 +329,7 @@ fun CommentBox(
                         .padding(8.dp)
                 )
             }
-
         }
-    }
-}
-
-@Composable
-fun LikeDislikeIcon(iconId: Int, count: String = "-1", onClick: () -> Unit, modifier: Modifier = Modifier) {
-    Row(
-        modifier = modifier.padding(start = 8.dp, top = 8.dp)
-    ) {
-        Icon(
-            painter = painterResource(id = iconId),
-            contentDescription = null,
-            tint = Color.Gray,
-            modifier = Modifier
-                .size(24.dp)
-                .clickable { onClick() }
-        )
-        Spacer(modifier = Modifier.padding(2.dp))
-        if (!count.equals("-1"))
-            Text(
-                text = calculateLike(count),
-                color = Color.Gray
-            )
     }
 }
 
@@ -376,7 +397,7 @@ fun DecriptionBottomSheet(video: VideoItem) {
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
                     Text(
-                        text = video.statistics!!.viewCount,
+                        text = formatNumber(video.statistics!!.viewCount),
                         style = upperTextStyle
                     )
                     Text(text = "Lượt xem")
@@ -609,5 +630,7 @@ private fun WatchVideoScreenDescriptionPreview() {
 @Composable
 private fun WatchVideoScreenPreview() {
 
-    WatchVideo(video = fakeVideo.items[0], commentList = mockResponse, modifier = Modifier, { }, { }, Modifier)
+    WatchVideo(video = fakeVideo.items[0], commentList = mockResponse, modifier = Modifier, { }, { }, { id, rating ->
+
+    }, Modifier)
 }
