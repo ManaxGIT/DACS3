@@ -26,6 +26,8 @@ data class VideoStatisticsResponseItem(
     val id: String,
     @SerialName("statistics")
     val videoStatistics: VideoStatistics,
+    @SerialName("contentDetails")
+    val contentDetails: AdditionalContentDetails
 )
 
 
@@ -38,5 +40,37 @@ data class VideoStatistics(
     @SerialName("likeCount")
     val likeCount: String = "1",
     @SerialName("viewCount")
-    val viewCount: String
+    val viewCount: String,
+)
+
+
+@Serializable
+data class AdditionalContentDetails(
+    @SerialName("duration")
+    val duration: String,
+    @SerialName("dimension")
+    val dimension: String? = null,
+    @SerialName("definition")
+    val definition: String? = null,
+    @SerialName("caption")
+    val caption: String? = null,
+    @SerialName("licensedContent")
+    val licensedContent: Boolean? = null,
+    @SerialName("regionRestriction")
+    val regionRestriction: RegionRestriction? = null,
+    @SerialName("contentRating")
+    val contentRating: Unit? = null,
+    @SerialName("projection")
+    val projection: String? = null,
+    @SerialName("hasCustomThumbnail")
+    val contentRhasCustomThumbnailating: Boolean? = null,
+
+)
+
+@Serializable
+data class RegionRestriction(
+    @SerialName("allowed")
+    val allowed: List<String>? = null,
+    @SerialName("blocked")
+    val blocked: List<String>? = null,
 )

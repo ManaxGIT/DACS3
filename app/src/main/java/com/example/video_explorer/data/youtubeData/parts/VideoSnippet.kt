@@ -11,7 +11,7 @@ data class VideoSnippet(
     @SerialName("channelId")
     val channelId: String,
     @SerialName("title")
-    val title: String,
+    var title: String,
     @SerialName("description")
     var description: String,
     @SerialName("thumbnails")

@@ -1,7 +1,9 @@
 package com.example.video_explorer.ui.render
 
 import android.content.Context
+import android.os.Build
 import android.util.Log
+import androidx.annotation.RequiresApi
 import com.example.video_explorer.data.youtubeData.CommentItem
 import com.example.video_explorer.data.youtubeData.VideoItem
 import com.example.video_explorer.data.youtubeData.YoutubeVideoComment
@@ -10,9 +12,22 @@ import com.google.android.gms.auth.api.signin.GoogleSignInClient
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions
 import java.text.NumberFormat
 import java.text.SimpleDateFormat
+import java.time.Duration
 import java.util.Date
 import java.util.Locale
 import java.util.TimeZone
+
+fun convertDuration(duration: String?): String {
+    if (duration == null)
+        return "--/--"
+    val newDuration = Duration.parse(duration)
+
+    val hours = newDuration.toHours()
+    val minutes = newDuration.toMinutes() % 60
+    val seconds = newDuration.seconds % 60
+
+    return "${if(hours > 0) "$hours:" else ""}$minutes:${if(seconds < 10) "0$seconds" else seconds}"
+}
 
 fun calculateView(view: String): String {
     val viewNumber = view.toDouble()
@@ -36,6 +51,16 @@ fun calculateLike(view: String): String {
 
 fun calculateSubscriber(subscriber: String): String {
     return calculateView(subscriber)
+}
+
+
+fun getDateAgo(passedMiliSecond: Long): String{
+    val formatter = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'")
+    formatter.timeZone = TimeZone.getTimeZone("UTC")
+
+    val currentTime = Date().time - passedMiliSecond + 7*60*60*1000
+
+    return formatter.format(currentTime)
 }
 
 fun calculateTime(start: String): String {

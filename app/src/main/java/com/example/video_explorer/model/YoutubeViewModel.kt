@@ -34,7 +34,7 @@ class YoutubeViewModel(
 
     init {
 
-        getHomeVideoList(searchString = "lap trinh", maxResult = 6)
+        getHomeVideoList(searchString = "lap trinh", order = "hello", type = null, date = null, length = null)
 //        getHomeVideoListChannel()
 //        ratingVideo(videoId = "YQHsXMglC9A", rating="like")
     }
@@ -52,6 +52,9 @@ class YoutubeViewModel(
         signInUiState = SignInUiState.NotSignedIn()
     }
 
+    fun resetWatchScreenUiState() {
+        this.watchVideoUiState = WatchVideoUiState.Loading
+    }
     fun setWatchScreenUiStateToSuccess(videoItem: VideoItem) {
         this.watchVideoUiState = WatchVideoUiState.Success(youtubeVideoItem = videoItem)
         viewModelScope.launch {
@@ -108,30 +111,72 @@ class YoutubeViewModel(
         }
     }
 
-    fun getHomeVideoList(searchString: String = "", maxResult: Int = 20) {
+    fun getHomeVideoList(searchString: String = "", maxResult: Int = 20, order: String?, type: String?, date: String?, length: String?) {
         viewModelScope.launch {
             Log.i("ex_mess", "ViewModel getHomeVideoList Run Start")
             try {
                 homeScreenUiState = HomeScreenUiState.Loading
 
-                val searchResult = youtubeVideoRepository.getSearchVideo(searchString, maxResult = maxResult)
+                val searchResult = youtubeVideoRepository.getSearchVideo(searchString, maxResult = maxResult, order = order, type = type, date = date, length = length)
+
 //                var videoList: YoutubeVideo = youtubeVideoRepository.getVideoDetails("MV8moKp1Wxw,NESs1KPmtKM,7pFAqHpLIHM,7lCDEYXw3mM,EoNOWVYKyo0,RyTb5genMmE,D7obfQ26V1M,-ljpcKRJdA8,C3GouGa0noM")
                 homeScreenUiState = HomeScreenUiState.Success(videoList = searchResult, isChannelLoaded = false, isStatisticsLoaded = false)
-                searchResult.items.forEach{ video->
+//                searchResult.items.forEach{ video->
+//                    video.videoSnippet.title = video.videoSnippet.title.replace("&amp;","&")
+//                    val youtubeChannel = getChannelDetails(video.videoSnippet.channelId)
+//                    if (youtubeChannel != null) {
+//                        video.channel = youtubeChannel.items[0]
+//                    }
+//                }
+                for (i in 0..4) {
+                    val video = searchResult.items[i]
+                    video.videoSnippet.title = video.videoSnippet.title
+                        .replace("&amp;","&")
+                        .replace("&#39;", "'")
+                        .replace("&quot;", "\"")
+
                     val youtubeChannel = getChannelDetails(video.videoSnippet.channelId)
                     if (youtubeChannel != null) {
                         video.channel = youtubeChannel.items[0]
                     }
                 }
                 homeScreenUiState = HomeScreenUiState.Success(videoList = searchResult, isChannelLoaded = true, isStatisticsLoaded = false)
-                searchResult.items.forEach{ video->
+//                searchResult.items.forEach{ video->
+//                    val videoStatisticsResponse = getVideoStatistics(video.searchResponseId.id)
+//                    if (videoStatisticsResponse != null) {
+//                        video.statistics = videoStatisticsResponse.items[0].videoStatistics
+//                        video.duration = videoStatisticsResponse.items[0].contentDetails.duration
+//                    }
+//                }
+                for (i in 0..4) {
+                    val video = searchResult.items[i]
                     val videoStatisticsResponse = getVideoStatistics(video.searchResponseId.id)
                     if (videoStatisticsResponse != null) {
                         video.statistics = videoStatisticsResponse.items[0].videoStatistics
+                        video.duration = videoStatisticsResponse.items[0].contentDetails.duration
                     }
                 }
                 homeScreenUiState = HomeScreenUiState.Success(videoList = searchResult, isChannelLoaded = true, isStatisticsLoaded = true)
 
+                for (i in 5..searchResult.items.size - 1) {
+                    val video = searchResult.items[i]
+
+                    video.videoSnippet.title = video.videoSnippet.title
+                        .replace("&amp;","&")
+                        .replace("&#39;", "'")
+                        .replace("&quot;", "\"")
+
+                    val youtubeChannel = getChannelDetails(video.videoSnippet.channelId)
+                    if (youtubeChannel != null) {
+                        video.channel = youtubeChannel.items[0]
+                    }
+
+                    val videoStatisticsResponse = getVideoStatistics(video.searchResponseId.id)
+                    if (videoStatisticsResponse != null) {
+                        video.statistics = videoStatisticsResponse.items[0].videoStatistics
+                        video.duration = videoStatisticsResponse.items[0].contentDetails.duration
+                    }
+                }
 
 
 

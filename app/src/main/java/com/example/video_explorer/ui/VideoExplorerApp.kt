@@ -114,6 +114,7 @@ fun VideoExplorerApp(
             }
             composable(route = Screen.WatchVideo.name) {
                 WatchVideoScreen(
+                    navController = navController,
                     watchVideoUiState = youtubeViewModel.watchVideoUiState,
                     youtubeViewModel = youtubeViewModel
                 )

@@ -1,7 +1,11 @@
 package com.example.video_explorer.ui.screen
 
+import android.app.Activity
+import android.content.pm.ActivityInfo
+import android.os.Build
 import com.example.video_explorer.R
 import android.util.Log
+import androidx.annotation.RequiresApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -9,17 +13,26 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.Divider
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExposedDropdownMenuBox
+import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextField
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.TopAppBarScrollBehavior
@@ -38,8 +51,10 @@ import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.graphics.colorspace.Rgb
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -48,10 +63,10 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.window.Dialog
 import androidx.navigation.NavHostController
 import coil.compose.AsyncImage
 import coil.compose.rememberAsyncImagePainter
-import com.example.video_explorer.data.YoutubeVideoRepository
 import com.example.video_explorer.data.state.HomeScreenUiState
 import com.example.video_explorer.data.state.SignInUiState
 import com.example.video_explorer.data.youtubeData.ChannelItem
@@ -71,8 +86,10 @@ import com.example.video_explorer.model.YoutubeViewModel
 import com.example.video_explorer.ui.Screen
 import com.example.video_explorer.ui.render.calculateTime
 import com.example.video_explorer.ui.render.calculateView
+import com.example.video_explorer.ui.render.convertDuration
 import com.example.video_explorer.ui.render.reduceStringLength
 
+@RequiresApi(Build.VERSION_CODES.O)
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreen(
@@ -81,6 +98,8 @@ fun HomeScreen(
     modifier: Modifier = Modifier,
 ) {
     Log.i("ex_mess", "HomeScreen Run Start")
+    val context = LocalContext.current
+    (context as Activity).requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
     val homeScreenUiState = youtubeViewModel.homeScreenUiState
     when(homeScreenUiState) {
         is HomeScreenUiState.Loading -> {
@@ -96,8 +115,8 @@ fun HomeScreen(
                     YoutubeTopAppBar(
                         signInUiState = youtubeViewModel.signInUiState,
                         scrollBehavior = scrollBehavior,
-                        searchHandler = {searchString ->
-                            youtubeViewModel.getHomeVideoList(searchString = searchString)
+                        searchHandler = {searchString, order, type, date, length ->
+                            youtubeViewModel.getHomeVideoList(searchString = searchString, maxResult = 5, order = order, type = type, date = date, length = length)
                         },
                         onProfileClick = {
                             navController.navigate(route = Screen.ProfileScreen.name)
@@ -126,32 +145,48 @@ fun HomeScreen(
 fun YoutubeTopAppBar(
     signInUiState: SignInUiState,
     scrollBehavior: TopAppBarScrollBehavior,
-    searchHandler: (String) -> Unit,
+    searchHandler: (String,String?,String?,String?,String?) -> Unit,
     onProfileClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    var searchString by remember { mutableStateOf("") }
+    var searchString: String by remember { mutableStateOf("") }
+    var orderCriteria: String by remember { mutableStateOf("Mức độ liên quan") }
+    var typeCriteria: String by remember { mutableStateOf("Video") }
+    var dateCriteria: String by remember { mutableStateOf("Mọi thời điểm") }
+    var lengthCriteria: String by remember { mutableStateOf("Bất kỳ") }
+
     var isSearching by remember { mutableStateOf(false) }
     var isFocused by remember { mutableStateOf(false) }
     val focusRequester = remember { FocusRequester() }
+    var isConditionBoxShow by remember { mutableStateOf(false) }
 
     LaunchedEffect(isSearching){
-        if (isSearching)
+        if (isSearching == true)
             focusRequester.requestFocus()
         if (isFocused == false)
             isSearching = false
     }
     TopAppBar(
-        modifier = modifier
-            .padding(end = 16.dp),
+        modifier = modifier,
         scrollBehavior = scrollBehavior,
+        colors = TopAppBarDefaults.smallTopAppBarColors(containerColor = Color.LightGray),
         title = {
             if(isSearching == false) {
                 Row(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Spacer(modifier = Modifier.width(32.dp))
-                    Text(text = "Youtube")
+                    Image(
+                        painter = painterResource(id = R.drawable.youtube_logo),
+                        contentDescription = "Profile picture",
+                        modifier = Modifier
+                            .height(36.dp),
+//                        contentScale = ContentScale.Crop
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(
+                        text = "Youtube",
+                        style = TextStyle(fontWeight = FontWeight.Bold, fontSize = 24.sp),
+                        modifier = Modifier)
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.Absolute.Right
@@ -169,6 +204,7 @@ fun YoutubeTopAppBar(
                         )
                         Spacer(modifier = Modifier.width(8.dp))
                         val profilePicModifier = Modifier
+                            .padding(end = 4.dp)
                             .size(36.dp)
                             .clip(CircleShape)
                             .clickable { onProfileClick() }
@@ -225,15 +261,205 @@ fun YoutubeTopAppBar(
                         focusRequester = focusRequester,
                         searchClick = {
                             isFocused = false
-                            searchHandler(searchString)
+                            searchHandler(searchString, orderCriteria, null, dateCriteria, lengthCriteria)
                         }
                     )
+
                 }
+            }
+
+        },
+        actions = {
+            if(isSearching)
+                Icon(
+                    imageVector = Icons.Filled.MoreVert,
+                    contentDescription = "Search Icon",
+                    tint = Color.Black,
+                    modifier = Modifier
+                        .size(36.dp)
+                        .clickable {
+                            isConditionBoxShow = !isConditionBoxShow
+                        }
+                )
+            if(isConditionBoxShow) {
+                CustomDialog(
+                    onConfirm = {
+                        searchHandler(searchString, orderCriteria, typeCriteria, dateCriteria, lengthCriteria)
+                    },
+                    onDismiss = {
+                        isConditionBoxShow = false
+                    },
+                    orderCriteria = orderCriteria,
+                    onOrderChange = {menuBoxValue: String ->
+                        orderCriteria = menuBoxValue
+                    },
+                    typeCriteria = typeCriteria,
+                    onTypeChange = {menuBoxValue: String ->
+                        typeCriteria = menuBoxValue
+                    },
+                    dateCriteria = dateCriteria,
+                    onDateChange = {menuBoxValue: String ->
+                        dateCriteria = menuBoxValue
+                    },
+                    lengthCriteria = lengthCriteria,
+                    onLengthChange = {menuBoxValue: String ->
+                        lengthCriteria = menuBoxValue
+                    },
+                )
             }
         }
     )
+
 }
 
+
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun CustomDialog(
+    onDismiss: () -> Unit,
+    onConfirm: () -> Unit,
+    orderCriteria: String,
+    onOrderChange: (String) -> Unit,
+    typeCriteria: String,
+    onTypeChange: (String) -> Unit,
+    dateCriteria: String,
+    onDateChange: (String) -> Unit,
+    lengthCriteria: String,
+    onLengthChange: (String) -> Unit,
+) {
+    Dialog(
+        onDismissRequest = onDismiss,
+    ) {
+        @Composable
+        fun InnerItems(
+            labelName: String,
+            value: String,
+            onValueChange: (String) -> Unit,
+            choiceList: List<String>,
+        ) {
+            var isExpanded: Boolean by remember { mutableStateOf(false) }
+            Row(
+                verticalAlignment = Alignment.CenterVertically
+            ){
+                Text(
+                    text = labelName,
+                    style = TextStyle(fontSize = 18.sp),
+                    modifier = Modifier
+                        .padding(8.dp)
+                        .width(90.dp)
+                )
+                ExposedDropdownMenuBox(
+                    expanded = isExpanded,
+                    onExpandedChange = {isExpanded = it}
+                ) {
+                    TextField(
+                        value = value,
+                        onValueChange = {},
+                        readOnly = true,
+                        trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = isExpanded) },
+                        colors = ExposedDropdownMenuDefaults.textFieldColors(),
+                        modifier = Modifier
+                            .menuAnchor()
+                    )
+
+                    ExposedDropdownMenu(
+                        expanded = isExpanded,
+                        onDismissRequest = { isExpanded = false }
+                    ) {
+                        choiceList.forEach{ choice->
+                            DropdownMenuItem(
+                                text = { Text(text = choice) },
+                                onClick = {
+                                    onValueChange(choice)
+                                    isExpanded = false
+                                }
+                            )
+                        }
+                    }
+                }
+            }
+        }
+        Column(
+            modifier = Modifier
+                .width(300.dp)
+//                .height(200.dp)
+                .background(Color.White)
+        ){
+            Text(
+                text = "Bộ lọc tìm kiếm",
+                style = TextStyle(fontWeight = FontWeight.Bold, fontSize = 24.sp),
+                modifier = Modifier.padding(20.dp)
+            )
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(8.dp)
+            ) {
+                InnerItems(
+                    labelName = "Sắp xếp theo",
+                    value = orderCriteria,
+                    onValueChange = { menuBoxValue: String ->
+                        onOrderChange(menuBoxValue)
+                    },
+                    choiceList = listOf("Mức độ liên quan", "Ngày tải lên", "Lượt xem", "Xếp hạng")
+                )
+                InnerItems(
+                    labelName = "Loại",
+                    value = typeCriteria,
+                    onValueChange = { menuBoxValue: String ->
+                        onTypeChange(menuBoxValue)
+                    },
+                    choiceList = listOf("Video")
+                )
+                InnerItems(
+                    labelName = "Ngày tải lên",
+                    value = dateCriteria,
+                    onValueChange = { menuBoxValue: String ->
+                        onDateChange(menuBoxValue)
+                    },
+                    listOf("Mọi thời điểm", "Một giờ qua", "Hôm nay", "Tuần này", "Tháng này", "Năm nay")
+                )
+                InnerItems(
+                    labelName = "Thời lượng",
+                    value = lengthCriteria,
+                    onValueChange = { menuBoxValue: String ->
+                        onLengthChange(menuBoxValue)
+                    },
+                    choiceList = listOf("Bất kỳ", "Dưới 4 phút", "4 - 20 phút", "Trên 20 phút")
+                )
+            }
+            Divider(color = Color.Gray, thickness = 1.dp, modifier = Modifier.fillMaxWidth())
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.Absolute.Right
+            ){
+                Text(
+                    text = "Huỷ",
+                    style = TextStyle(fontWeight = FontWeight.Bold, fontSize = 18.sp, color = Color(0xff0073e6)),
+                    modifier = Modifier
+                        .padding(20.dp)
+                        .clickable {
+                            onOrderChange("Mức độ liên quan")
+                            onTypeChange("Video")
+                            onDateChange("Mọi thời điểm")
+                            onLengthChange("Bất kỳ")
+                            onDismiss()
+                        }
+                )
+                Text(
+                    text = "Áp dụng",
+                    style = TextStyle(fontWeight = FontWeight.Bold, fontSize = 18.sp, color = Color(0xff0073e6)),
+                    modifier = Modifier
+                        .padding(20.dp)
+                        .clickable {
+                            onConfirm()
+                        }
+                )
+            }
+        }
+    }
+}
 
 @Composable
 fun SearchBar(
@@ -288,11 +514,13 @@ fun SearchBar(
                         onFocusChange(focusState)
                     }
             )
+
         }
 
     }
 }
 
+@RequiresApi(Build.VERSION_CODES.O)
 @Composable
 private fun HomeScreenList(
     homeScreenUiState: HomeScreenUiState,
@@ -326,14 +554,32 @@ fun VideoItem(video: VideoItem, onClick: () -> Unit, modifier: Modifier= Modifie
             .clickable(onClick = onClick)
 
     ) {
-        Image(
-            painter = rememberAsyncImagePainter(model = video.videoSnippet.thumbnails.medium.url),
-            contentDescription = null,
-            modifier = Modifier
-                .fillMaxWidth()
-                .aspectRatio(16f / 9f),
-            contentScale = ContentScale.Crop
-        )
+        Box{
+            AsyncImage(
+                model = video.videoSnippet.thumbnails.high.url,
+                contentDescription = null,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .aspectRatio(16f / 9f),
+                contentScale = ContentScale.Crop
+            )
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.Absolute.Right
+            ){
+                Card(
+                    shape = RoundedCornerShape(topStart = 4.dp, topEnd = 4.dp, bottomStart = 4.dp, bottomEnd = 4.dp),
+                    colors = CardDefaults.cardColors(containerColor = Color(0xB3000000)),
+                    modifier = Modifier.padding(top = 182.dp, end = 8.dp)
+                ){
+                    Text(
+                        text = convertDuration(video.duration),
+                        modifier = Modifier.padding(4.dp),
+                        style = TextStyle(color = Color.White)
+                    )
+                }
+            }
+        }
         Row(
             modifier = Modifier.padding(
                 start = 8.dp, top = 8.dp
@@ -383,7 +629,9 @@ fun VideoItem(video: VideoItem, onClick: () -> Unit, modifier: Modifier= Modifie
 @Composable
 fun PreviewSearchBar() {
 
-    YoutubeTopAppBar(signInUiState = SignInUiState.NotSignedIn(), scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior(), {}, onProfileClick = {})
+    YoutubeTopAppBar(signInUiState = SignInUiState.NotSignedIn(), scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior(), {a,b,c,d,e->
+
+    }, onProfileClick = {})
 //    SearchBar(
 //        query = query,
 //        onQueryChange = { query = it },
@@ -391,6 +639,13 @@ fun PreviewSearchBar() {
 //    )
 }
 
+@Preview(showBackground = true)
+@Composable
+fun CustomDialogPreview() {
+    CustomDialog({}, {}, "",{},"",{},"",{},"",{},)
+}
+
+@RequiresApi(Build.VERSION_CODES.O)
 @Preview(showBackground = true)
 @Composable
 fun VideoItemPreview() {
@@ -450,7 +705,8 @@ fun VideoItemPreview() {
         searchResponseId = SearchResponseId(kind = "", id = "MV8moKp1Wxw"),
         videoSnippet = snippet,
         statistics = statistics,
-        channel = mockChannel
+        channel = mockChannel,
+        duration = "PT3H21M54S"
     )
 
     val pageInfo = PageInfo(

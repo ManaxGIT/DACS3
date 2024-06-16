@@ -21,6 +21,8 @@ data class VideoItem(
     @SerialName("channel")
     var channel: ChannelItem? = null,
 
+    var duration: String? = null
+
 )
 
 @Serializable

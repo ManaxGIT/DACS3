@@ -27,7 +27,7 @@ data class AdditionalDetails(
     @SerialName("id")
     val id: String,
     @SerialName("snippet")
-    val snippet: AdditionalDetailsSnippet
+    val snippet: AdditionalDetailsSnippet,
 )
 
 @Serializable

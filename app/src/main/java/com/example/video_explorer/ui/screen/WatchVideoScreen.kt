@@ -1,5 +1,8 @@
 package com.example.video_explorer.ui.screen
 
+import android.app.Activity
+import android.content.pm.ActivityInfo
+import android.content.res.Configuration
 import android.util.Log
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
@@ -9,6 +12,7 @@ import com.example.video_explorer.R
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -28,6 +32,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberBottomSheetScaffoldState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -40,6 +45,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.res.painterResource
@@ -48,7 +54,10 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.navigation.NavController
+import androidx.navigation.compose.rememberNavController
 import coil.compose.rememberAsyncImagePainter
+import com.example.video_explorer.data.state.HomeScreenUiState
 import com.example.video_explorer.data.state.WatchVideoUiState
 import com.example.video_explorer.data.youtubeData.ChannelItem
 import com.example.video_explorer.data.youtubeData.CommentItem
@@ -70,7 +79,8 @@ import com.example.video_explorer.data.youtubeData.parts.TopLevelComment
 import com.example.video_explorer.data.youtubeData.parts.TopLevelCommentSnippet
 import com.example.video_explorer.data.youtubeData.parts.TopicDetails
 import com.example.video_explorer.model.YoutubeViewModel
-import com.example.video_explorer.ui.YouTubeVideoPlayer
+import com.example.video_explorer.ui.Screen
+import com.example.video_explorer.ui.videoplayer.YouTubeVideoPlayer
 import com.example.video_explorer.ui.render.calculateLike
 import com.example.video_explorer.ui.render.calculateSubscriber
 import com.example.video_explorer.ui.render.calculateTime
@@ -89,6 +99,7 @@ private sealed interface Sheet {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun WatchVideoScreen(
+    navController: NavController,
     watchVideoUiState: WatchVideoUiState,
     youtubeViewModel: YoutubeViewModel
 ) {
@@ -96,6 +107,7 @@ fun WatchVideoScreen(
     when(watchVideoUiState) {
         is WatchVideoUiState.Loading -> LoadingScreen(modifier = Modifier.fillMaxWidth())
         is WatchVideoUiState.Success -> {
+            val context = LocalContext.current
             val scaffoldState = rememberBottomSheetScaffoldState()
             val scope = rememberCoroutineScope()
             var sheetContent: Sheet by remember { mutableStateOf(Sheet.Description) }
@@ -105,39 +117,75 @@ fun WatchVideoScreen(
             val localDensity = LocalDensity.current
             var videoHeightDp by remember { mutableStateOf(500.dp) }
 
-            BottomSheetScaffold(
-                scaffoldState = scaffoldState,
-                sheetContent =  {
-                    BottomSheetPart(
-                        bottomSheetContent = sheetContent,
-                        video = watchVideoUiState.youtubeVideoItem,
-                        commentList = watchVideoUiState.youtubeVideoComment,
-                        modifier = Modifier.height(screenHeight - videoHeightDp - 24.dp)
-                    )
-                },
-                sheetPeekHeight = 0.dp,
-                sheetDragHandle = { NewDragHandle() }
-            ) {
-                WatchVideo(
-                    video = watchVideoUiState.youtubeVideoItem,
-                    commentList = watchVideoUiState.youtubeVideoComment,
-                    openDescription = { scope.launch {
-                        sheetContent = Sheet.Description
-                        scaffoldState.bottomSheetState.expand()
+            var isFullScreen by remember { mutableStateOf(false) }
+            var activity = context as Activity
+            val orientation = configuration.orientation
 
-                    }},
-                    openComment = { scope.launch {
-                        sheetContent = Sheet.Comment
-                        scaffoldState.bottomSheetState.expand()
-                    }},
-                    getHeightModifier = Modifier
-                        .onGloballyPositioned { coordinates ->
-                            videoHeightDp = with(localDensity) { coordinates.size.height.toDp() }
-                        },
-                    ratingHandler = { videoId, rating ->
-                        youtubeViewModel.ratingVideo(videoId = videoId, rating = rating)
+            activity.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED
+
+            LaunchedEffect(orientation) {
+                if (orientation == Configuration.ORIENTATION_LANDSCAPE) {
+                    isFullScreen = true
+                } else
+                    isFullScreen = false
+            }
+
+            if (isFullScreen) {
+                YouTubeVideoPlayer(
+                    videoId = watchVideoUiState.youtubeVideoItem.searchResponseId.id,
+                    lifecycleOwner = LocalLifecycleOwner.current,
+                    modifier = Modifier.fillMaxSize(),
+                    toggleFullScreen = {
+                        activity.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED
+                        isFullScreen = false
                     }
                 )
+            } else {
+                BottomSheetScaffold(
+                    scaffoldState = scaffoldState,
+                    sheetContent =  {
+                        BottomSheetPart(
+                            bottomSheetContent = sheetContent,
+                            video = watchVideoUiState.youtubeVideoItem,
+                            commentList = watchVideoUiState.youtubeVideoComment,
+                            modifier = Modifier.height(screenHeight - videoHeightDp - 24.dp)
+                        )
+                    },
+                    sheetPeekHeight = 0.dp,
+                    sheetDragHandle = { NewDragHandle() }
+                ) {
+                    Column(
+                        modifier = Modifier
+                    ) {
+                        WatchVideo(
+                            youtubeViewModel = youtubeViewModel,
+                            navController = navController,
+                            video = watchVideoUiState.youtubeVideoItem,
+                            commentList = watchVideoUiState.youtubeVideoComment,
+                            openDescription = { scope.launch {
+                                sheetContent = Sheet.Description
+                                scaffoldState.bottomSheetState.expand()
+
+                            }},
+                            openComment = { scope.launch {
+                                sheetContent = Sheet.Comment
+                                scaffoldState.bottomSheetState.expand()
+                            }},
+                            getHeightModifier = Modifier
+                                .onGloballyPositioned { coordinates ->
+                                    videoHeightDp = with(localDensity) { coordinates.size.height.toDp() }
+                                },
+                            ratingHandler = { videoId, rating ->
+                                youtubeViewModel.ratingVideo(videoId = videoId, rating = rating)
+                            },
+                            toggleFullScreen = {
+                                activity.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE
+                                isFullScreen = true
+                            }
+                        )
+                        
+                    }
+                }
             }
 
         }
@@ -147,13 +195,16 @@ fun WatchVideoScreen(
 
 @Composable
 fun WatchVideo(
+    youtubeViewModel: YoutubeViewModel,
+    navController: NavController,
     video: VideoItem,
     commentList: YoutubeVideoComment?,
     modifier: Modifier = Modifier,
     openDescription: () -> Unit,
     openComment: () -> Unit,
     ratingHandler: (videoId: String, rating: String) -> Unit,
-    getHeightModifier: Modifier
+    getHeightModifier: Modifier,
+    toggleFullScreen: () -> Unit
 
 ) {
     Column(
@@ -162,10 +213,13 @@ fun WatchVideo(
         YouTubeVideoPlayer(
             videoId = video.searchResponseId.id,
             lifecycleOwner = LocalLifecycleOwner.current,
-            modifier = getHeightModifier
+            modifier = getHeightModifier.then(Modifier.fillMaxWidth()),
+            toggleFullScreen = { toggleFullScreen() }
         )
         Column(
-            modifier = modifier.padding(start = 8.dp)
+            modifier = modifier
+                .padding(start = 8.dp)
+                .verticalScroll(rememberScrollState())
         ) {
             Column(
                 modifier = Modifier
@@ -240,6 +294,17 @@ fun WatchVideo(
                 commentCount = video.statistics!!.commentCount,
                 onOpenClick = { openComment() }
             )
+            for (i in 1..5) {
+                val recommendVideo = (youtubeViewModel.homeScreenUiState as HomeScreenUiState.Success).videoList.items[i]
+                VideoItem(
+                    video = recommendVideo,
+                    onClick = {
+                        navController.navigate(Screen.WatchVideo.name)
+                        youtubeViewModel.setWatchScreenUiStateToSuccess(recommendVideo)
+                    }
+                )
+            }
+
         }
 
     }
@@ -630,7 +695,7 @@ private fun WatchVideoScreenDescriptionPreview() {
 @Composable
 private fun WatchVideoScreenPreview() {
 
-    WatchVideo(video = fakeVideo.items[0], commentList = mockResponse, modifier = Modifier, { }, { }, { id, rating ->
-
-    }, Modifier)
+//    WatchVideo( video = fakeVideo.items[0], commentList = mockResponse, modifier = Modifier, { }, { }, { id, rating ->
+//
+//    }, Modifier, {})
 }
