@@ -19,10 +19,12 @@ import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Divider
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -98,9 +100,19 @@ fun HomeScreen(
     modifier: Modifier = Modifier,
 ) {
     Log.i("ex_mess", "HomeScreen Run Start")
+
+
+    var searchString: String by remember { mutableStateOf("lap trinh") }
+    var orderCriteria: String by remember { mutableStateOf("Mức độ liên quan") }
+    var typeCriteria: String by remember { mutableStateOf("Video") }
+    var dateCriteria: String by remember { mutableStateOf("Mọi thời điểm") }
+    var lengthCriteria: String by remember { mutableStateOf("Bất kỳ") }
+
     val context = LocalContext.current
+
     (context as Activity).requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
     val homeScreenUiState = youtubeViewModel.homeScreenUiState
+
     when(homeScreenUiState) {
         is HomeScreenUiState.Loading -> {
             LoadingScreen(modifier = modifier.fillMaxSize())
@@ -108,6 +120,7 @@ fun HomeScreen(
         }
         is HomeScreenUiState.Success -> {
             val scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior()
+
             Scaffold(
                 modifier = Modifier
                     .nestedScroll(scrollBehavior.nestedScrollConnection),
@@ -116,27 +129,75 @@ fun HomeScreen(
                         signInUiState = youtubeViewModel.signInUiState,
                         scrollBehavior = scrollBehavior,
                         searchHandler = {searchString, order, type, date, length ->
-                            youtubeViewModel.getHomeVideoList(searchString = searchString, maxResult = 5, order = order, type = type, date = date, length = length)
+                            youtubeViewModel.getHomeVideoList(searchString = searchString, order = order, type = type, date = date, length = length)
                         },
                         onProfileClick = {
                             navController.navigate(route = Screen.ProfileScreen.name)
-                        }
+                        },
+                        searchString = searchString,
+                        orderCriteria = orderCriteria,
+                        typeCriteria = typeCriteria,
+                        dateCriteria = dateCriteria,
+                        lengthCriteria = lengthCriteria,
+                        onSearchStringChange = {newSearchString ->
+                            searchString = newSearchString
+                        },
+                        onOrderChange = {menuBoxValue ->
+                            orderCriteria = menuBoxValue
+                        },
+                        onTypeChange = {menuBoxValue ->
+                            typeCriteria = menuBoxValue
+                        },
+                        onDateChange = {menuBoxValue ->
+                            dateCriteria = menuBoxValue
+                        },
+                        onLengthChange = {menuBoxValue ->
+                            lengthCriteria = menuBoxValue
+                        },
 
                     )
                 }
             ) { innerPadding ->
-                HomeScreenList(
-                    homeScreenUiState = homeScreenUiState,
-                    youtubeViewModel = youtubeViewModel,
-                    navController = navController,
-                    modifier = Modifier.padding(innerPadding)
-                )
+                Column {
+                    HomeScreenList(
+                        homeScreenUiState = homeScreenUiState,
+                        youtubeViewModel = youtubeViewModel,
+                        navController = navController,
+                        modifier = Modifier.padding(innerPadding),
+                        onExpandClick = {
+                            val originYoutubeVideoList: YoutubeVideo = homeScreenUiState.videoList
+                            youtubeViewModel.expandVideoList(originYoutubeVideoList = originYoutubeVideoList, searchString = searchString, order = orderCriteria, type = typeCriteria, date = dateCriteria, length = lengthCriteria, nextPageToken = originYoutubeVideoList.nextPageToken)
+                        }
+                    )
+                }
             }
         }
         is HomeScreenUiState.Error -> {
 //            Log.i("ex_mess", "HomeScreen Is Error")
             ErrorScreen(errorNote = homeScreenUiState.errorNote)
         }
+    }
+}
+
+@Composable
+fun ExpandBar(
+    onExpandClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Box(
+        modifier = modifier
+            .fillMaxWidth()
+            .clickable { onExpandClick() },
+        contentAlignment = Alignment.Center,
+
+    ) {
+        Icon(
+            imageVector = Icons.Default.ArrowDropDown,
+            contentDescription = "Drop down arrow",
+            tint = Color.Gray,
+            modifier = Modifier
+                .size(40.dp)
+        )
     }
 }
 
@@ -148,13 +209,17 @@ fun YoutubeTopAppBar(
     searchHandler: (String,String?,String?,String?,String?) -> Unit,
     onProfileClick: () -> Unit,
     modifier: Modifier = Modifier,
+    searchString: String,
+    onSearchStringChange: (String) -> Unit,
+    orderCriteria: String,
+    onOrderChange: (String) -> Unit,
+    typeCriteria: String,
+    onTypeChange: (String) -> Unit,
+    dateCriteria: String,
+    onDateChange: (String) -> Unit,
+    lengthCriteria: String,
+    onLengthChange: (String) -> Unit,
 ) {
-    var searchString: String by remember { mutableStateOf("") }
-    var orderCriteria: String by remember { mutableStateOf("Mức độ liên quan") }
-    var typeCriteria: String by remember { mutableStateOf("Video") }
-    var dateCriteria: String by remember { mutableStateOf("Mọi thời điểm") }
-    var lengthCriteria: String by remember { mutableStateOf("Bất kỳ") }
-
     var isSearching by remember { mutableStateOf(false) }
     var isFocused by remember { mutableStateOf(false) }
     val focusRequester = remember { FocusRequester() }
@@ -254,7 +319,7 @@ fun YoutubeTopAppBar(
                     )
                     SearchBar(
                         query = searchString,
-                        onQueryChange = { searchString = it },
+                        onQueryChange = { onSearchStringChange(it) },
                         onFocusChange = { focusState: FocusState ->
                             isFocused = focusState.isFocused
                         },
@@ -291,19 +356,19 @@ fun YoutubeTopAppBar(
                     },
                     orderCriteria = orderCriteria,
                     onOrderChange = {menuBoxValue: String ->
-                        orderCriteria = menuBoxValue
+                        onOrderChange(menuBoxValue)
                     },
                     typeCriteria = typeCriteria,
                     onTypeChange = {menuBoxValue: String ->
-                        typeCriteria = menuBoxValue
+                        onTypeChange(menuBoxValue)
                     },
                     dateCriteria = dateCriteria,
                     onDateChange = {menuBoxValue: String ->
-                        dateCriteria = menuBoxValue
+                        onDateChange(menuBoxValue)
                     },
                     lengthCriteria = lengthCriteria,
                     onLengthChange = {menuBoxValue: String ->
-                        lengthCriteria = menuBoxValue
+                        onLengthChange(menuBoxValue)
                     },
                 )
             }
@@ -526,7 +591,8 @@ private fun HomeScreenList(
     homeScreenUiState: HomeScreenUiState,
     youtubeViewModel: YoutubeViewModel,
     navController: NavHostController,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    onExpandClick: () -> Unit
 ) {
     LazyColumn(
         modifier = modifier.fillMaxSize()
@@ -539,6 +605,9 @@ private fun HomeScreenList(
                     youtubeViewModel.setWatchScreenUiStateToSuccess(videoItem)
                 }
             )
+        }
+        item {
+            ExpandBar(onExpandClick = { onExpandClick() })
         }
     }
 }
@@ -595,13 +664,8 @@ fun VideoItem(video: VideoItem, onClick: () -> Unit, modifier: Modifier= Modifie
                     contentScale = ContentScale.Crop
                 )
             else
-                Image(
-                    painter = painterResource(id = R.drawable.thumb_down),
-                    contentDescription = null,
-                    modifier = Modifier
-                        .size(56.dp)
-                        .clip(CircleShape),
-                    contentScale = ContentScale.Crop
+                CircularProgressIndicator(
+                    modifier = Modifier.size(36.dp)
                 )
             Column(
                 modifier = Modifier.padding(start = 8.dp)
@@ -631,7 +695,7 @@ fun PreviewSearchBar() {
 
     YoutubeTopAppBar(signInUiState = SignInUiState.NotSignedIn(), scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior(), {a,b,c,d,e->
 
-    }, onProfileClick = {})
+    }, onProfileClick = {}, Modifier, "", {test -> },"", {test -> },"", {test -> },"", {test -> },"", {test -> },)
 //    SearchBar(
 //        query = query,
 //        onQueryChange = { query = it },
@@ -706,7 +770,7 @@ fun VideoItemPreview() {
         videoSnippet = snippet,
         statistics = statistics,
         channel = mockChannel,
-        duration = "PT3H21M54S"
+        duration = "PT45H12M0S"
     )
 
     val pageInfo = PageInfo(

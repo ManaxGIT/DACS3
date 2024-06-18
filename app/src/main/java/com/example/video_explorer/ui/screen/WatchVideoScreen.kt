@@ -294,6 +294,7 @@ fun WatchVideo(
                 commentCount = video.statistics!!.commentCount,
                 onOpenClick = { openComment() }
             )
+            Spacer(modifier = Modifier.height(8.dp))
             for (i in 1..5) {
                 val recommendVideo = (youtubeViewModel.homeScreenUiState as HomeScreenUiState.Success).videoList.items[i]
                 VideoItem(
@@ -301,7 +302,8 @@ fun WatchVideo(
                     onClick = {
                         navController.navigate(Screen.WatchVideo.name)
                         youtubeViewModel.setWatchScreenUiStateToSuccess(recommendVideo)
-                    }
+                    },
+                    modifier = Modifier.padding(end = 8.dp)
                 )
             }
 
@@ -318,7 +320,8 @@ fun LikeDislikeIcon(
     modifier: Modifier = Modifier
 ) {
     Row(
-        modifier = modifier.padding(start = 8.dp, top = 8.dp)
+        modifier = modifier.padding(start = 8.dp, top = 8.dp),
+        verticalAlignment = Alignment.CenterVertically
     ) {
         Icon(
             painter = painterResource(id = iconId),
@@ -523,6 +526,11 @@ fun CommentBottomSheet(commentList: YoutubeVideoComment?) {
                             text = commentItem.snippet.topLevelComment.snippet.textOriginal,
                             style = TextStyle(color = Color.Black, fontSize = 15.sp)
                         )
+                        LikeDislikeIcon(
+                            iconId = R.drawable.thumb_up,
+                            count = commentItem.snippet.topLevelComment.snippet.likeCount.toString(),
+                            onIconClick = { /*TODO*/ }
+                        )
                     }
                 }
             }
@@ -655,7 +663,7 @@ val mockResponse = YoutubeVideoComment(
                         ),
                         canRate = true,
                         viewerRating = "none",
-                        likeCount = 1,
+                        likeCount = 12,
                         publishedAt = "2024-02-06T21:00:47Z",
                         updatedAt = "2024-02-06T21:00:47Z"
                     )

@@ -20,7 +20,8 @@ interface YoutubeApiService {
         @Query("order") order: String,
         @Query("type") type: String,
         @Query("publishedAfter") publishedAfter: String,
-        @Query("videoDuration") videoDuration: String
+        @Query("videoDuration") videoDuration: String,
+        @Query("pageToken") pageToken: String?
 
 
     ): YoutubeVideo

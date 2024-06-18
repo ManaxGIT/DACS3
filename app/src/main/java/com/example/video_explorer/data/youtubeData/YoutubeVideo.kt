@@ -12,9 +12,11 @@ data class YoutubeVideo(
     @SerialName("kind")
     val kind: String,
     @SerialName("items")
-    val items: List<VideoItem>,
+    var items: List<VideoItem>,
     @SerialName("nextPageToken")
     val nextPageToken: String,
+    @SerialName("prevPageToken")
+    val prevPageToken: String? = null,
     @SerialName("regionCode")
     val regionCode: String,
     @SerialName("pageInfo")

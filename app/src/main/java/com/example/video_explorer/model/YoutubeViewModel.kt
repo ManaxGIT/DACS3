@@ -17,7 +17,9 @@ import com.example.video_explorer.data.state.SignInUiState
 import com.example.video_explorer.data.user.UserData
 import com.example.video_explorer.data.youtubeData.VideoItem
 import com.example.video_explorer.data.youtubeData.YoutubeChannel
+import com.example.video_explorer.data.youtubeData.YoutubeVideo
 import com.example.video_explorer.data.youtubeData.parts.VideoStatisticsResponse
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import java.io.IOException
 import kotlin.ClassCastException
@@ -117,7 +119,7 @@ class YoutubeViewModel(
             try {
                 homeScreenUiState = HomeScreenUiState.Loading
 
-                val searchResult = youtubeVideoRepository.getSearchVideo(searchString, maxResult = maxResult, order = order, type = type, date = date, length = length)
+                val searchResult = youtubeVideoRepository.getSearchVideo(searchString, maxResult = maxResult, order = order, type = type, date = date, length = length, nextPageToken = null)
 
 //                var videoList: YoutubeVideo = youtubeVideoRepository.getVideoDetails("MV8moKp1Wxw,NESs1KPmtKM,7pFAqHpLIHM,7lCDEYXw3mM,EoNOWVYKyo0,RyTb5genMmE,D7obfQ26V1M,-ljpcKRJdA8,C3GouGa0noM")
                 homeScreenUiState = HomeScreenUiState.Success(videoList = searchResult, isChannelLoaded = false, isStatisticsLoaded = false)
@@ -189,6 +191,72 @@ class YoutubeViewModel(
                 Log.i("ex_mess4", e.toString())
             }
             Log.i("ex_mess", "ViewModel getHomeVideoList Run End")
+        }
+    }
+
+    fun expandVideoList(originYoutubeVideoList: YoutubeVideo, searchString: String = "", maxResult: Int = 20, order: String?, type: String?, date: String?, length: String?, nextPageToken: String?) {
+        viewModelScope.launch {
+            try {
+                val searchResult = youtubeVideoRepository.getSearchVideo(searchString, maxResult = maxResult, order = order, type = type, date = date, length = length, nextPageToken = nextPageToken)
+
+                originYoutubeVideoList.items = originYoutubeVideoList.items + searchResult.items
+
+                homeScreenUiState = HomeScreenUiState.Success(originYoutubeVideoList, isChannelLoaded = false, isStatisticsLoaded = false)
+
+                for (i in 0..4) {
+                    val video = searchResult.items[i]
+                    video.videoSnippet.title = video.videoSnippet.title
+                        .replace("&amp;","&")
+                        .replace("&#39;", "'")
+                        .replace("&quot;", "\"")
+
+                    val youtubeChannel = getChannelDetails(video.videoSnippet.channelId)
+                    if (youtubeChannel != null) {
+                        video.channel = youtubeChannel.items[0]
+                    }
+                }
+
+                homeScreenUiState = HomeScreenUiState.Success(originYoutubeVideoList, isChannelLoaded = true, isStatisticsLoaded = false)
+
+                for (i in 0..4) {
+                    val video = searchResult.items[i]
+                    val videoStatisticsResponse = getVideoStatistics(video.searchResponseId.id)
+                    if (videoStatisticsResponse != null) {
+                        video.statistics = videoStatisticsResponse.items[0].videoStatistics
+                        video.duration = videoStatisticsResponse.items[0].contentDetails.duration
+                    }
+                }
+
+                homeScreenUiState = HomeScreenUiState.Success(originYoutubeVideoList, isChannelLoaded = true, isStatisticsLoaded = true)
+
+                for (i in 5..searchResult.items.size - 1) {
+                    val video = searchResult.items[i]
+
+                    video.videoSnippet.title = video.videoSnippet.title
+                        .replace("&amp;","&")
+                        .replace("&#39;", "'")
+                        .replace("&quot;", "\"")
+
+                    val youtubeChannel = getChannelDetails(video.videoSnippet.channelId)
+                    if (youtubeChannel != null) {
+                        video.channel = youtubeChannel.items[0]
+                    }
+
+                    val videoStatisticsResponse = getVideoStatistics(video.searchResponseId.id)
+                    if (videoStatisticsResponse != null) {
+                        video.statistics = videoStatisticsResponse.items[0].videoStatistics
+                        video.duration = videoStatisticsResponse.items[0].contentDetails.duration
+                    }
+                }
+
+            } catch (e: IOException) {
+                homeScreenUiState = HomeScreenUiState.Error("No Internet Connection")
+                Log.i("ex_expand", e.toString())
+            } catch (e: Exception) {
+                homeScreenUiState = HomeScreenUiState.Error()
+                Log.i("ex_expand", e.toString())
+            }
+
         }
     }
 

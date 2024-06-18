@@ -96,3 +96,8 @@ fun SignInSection(
         }
     }
 }
+
+
+fun getAiRespond() {
+
+}

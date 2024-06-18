@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -28,15 +29,16 @@ fun LoadingScreen(modifier: Modifier = Modifier) {
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Image(
-            painter = painterResource(id = R.drawable.loading_img),
-            contentDescription = "",
-            modifier = Modifier
-                .size(400.dp)
-                .clip(CircleShape),
-            contentScale = ContentScale.Crop,
-        )
-//        Text(text = "Loading...", modifier = Modifier.padding(16.dp))
+//        Image(
+//            painter = painterResource(id = R.drawable.loading_img),
+//            contentDescription = "",
+//            modifier = Modifier
+//                .size(400.dp)
+//                .clip(CircleShape),
+//            contentScale = ContentScale.Crop,
+//        )
+        CircularProgressIndicator()
+        Text(text = "Loading in progress...", modifier = Modifier.padding(16.dp))
 
     }
 }

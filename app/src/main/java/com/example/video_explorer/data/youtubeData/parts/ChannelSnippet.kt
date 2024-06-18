@@ -10,7 +10,7 @@ data class ChannelSnippet(
     @SerialName("description")
     val description: String,
     @SerialName("customUrl")
-    val customUrl: String,
+    val customUrl: String? = null,
     @SerialName("publishedAt")
     val publishedAt: String,
     @SerialName("thumbnails")

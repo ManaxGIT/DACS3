@@ -165,7 +165,7 @@ fun VideoExplorerApp(
                                 Toast.LENGTH_LONG
                             ).show()
 
-                            navController.popBackStack()
+//                            navController.popBackStack()
                             Log.i("ex_mess", "End sign out")
                         }
                     }

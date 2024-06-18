@@ -15,7 +15,7 @@ interface YoutubeVideoRepository {
     suspend fun getVideoStatistics(videoId: String): VideoStatisticsResponse
     suspend fun getChannelDetails(channelId: String): YoutubeChannel
     suspend fun getVideoCommentList(videoId: String): YoutubeVideoComment
-    suspend fun getSearchVideo(query: String, maxResult: Int, order: String?, type: String?, date: String?, length: String?): YoutubeVideo
+    suspend fun getSearchVideo(query: String, maxResult: Int, order: String?, type: String?, date: String?, length: String?, nextPageToken: String?): YoutubeVideo
     suspend fun rateVideo(videoId: String, rating: String)
 }
 
@@ -38,7 +38,7 @@ class NetworkYoutubeVideoRepository(
         return youtubeApiService.getVideoCommentList(videoId = videoId)
     }
 
-    override suspend fun getSearchVideo(query: String, maxResult: Int, order: String?, type: String?, date: String?, length: String?): YoutubeVideo {
+    override suspend fun getSearchVideo(query: String, maxResult: Int, order: String?, type: String?, date: String?, length: String?, nextPageToken: String?): YoutubeVideo {
         val newOrder = when(order) {
             "Mức độ liên quan" -> "relevance"
             "Ngày tải lên" -> "date"
@@ -73,12 +73,13 @@ class NetworkYoutubeVideoRepository(
 
         return youtubeApiService.getSearchVideo(
             query = query,
-            apiKey = "AIzaSyDkNTLceNFPSBUcUgFHSOVy5_CnfmUxzyQ",
+            apiKey = "AIzaSyBimcL3JIAot4qN5qvbKf_e1_AXljs6Luo",
             maxResults = maxResult.toString(),
             order = newOrder,
             type = newType,
             publishedAfter = newDate,
-            videoDuration = newLength
+            videoDuration = newLength,
+            pageToken = nextPageToken
         )
     }
 

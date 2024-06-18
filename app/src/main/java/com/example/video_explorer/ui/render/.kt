@@ -23,10 +23,13 @@ fun convertDuration(duration: String?): String {
     val newDuration = Duration.parse(duration)
 
     val hours = newDuration.toHours()
+    val newHours = if(hours > 0) "$hours:" else ""
     val minutes = newDuration.toMinutes() % 60
+    val newMinutes = if(hours == 0L && minutes > 9) "$minutes:" else "0$minutes:"
     val seconds = newDuration.seconds % 60
+    val newSeconds = if(seconds > 9) seconds else "0$seconds"
 
-    return "${if(hours > 0) "$hours:" else ""}$minutes:${if(seconds < 10) "0$seconds" else seconds}"
+    return "$newHours$newMinutes$newSeconds"
 }
 
 fun calculateView(view: String): String {
